@@ -25,11 +25,11 @@
  * Timing
  * ======================================================================== */
 
-static double get_time_sec(void)
-{
+static double get_time_sec(void) {
 #ifdef __APPLE__
     static mach_timebase_info_data_t tb;
-    if (tb.denom == 0) mach_timebase_info(&tb);
+    if (tb.denom == 0)
+        mach_timebase_info(&tb);
     uint64_t t = mach_absolute_time();
     return (double)t * (double)tb.numer / (double)tb.denom / 1e9;
 #else
@@ -45,8 +45,7 @@ static double get_time_sec(void)
 
 static const int PSDU_LEN = 100;
 
-static uint32_t bench_crc32(const uint8_t *data, size_t len)
-{
+static uint32_t bench_crc32(const uint8_t *data, size_t len) {
     uint32_t crc = 0xFFFFFFFFu;
     for (size_t i = 0; i < len; i++) {
         crc ^= data[i];
@@ -60,11 +59,10 @@ static uint32_t bench_crc32(const uint8_t *data, size_t len)
     return crc ^ 0xFFFFFFFFu;
 }
 
-static void make_psdu(uint8_t *psdu, int seed)
-{
+static void make_psdu(uint8_t *psdu, int seed) {
     for (int i = 0; i < PSDU_LEN - 4; i++)
         psdu[i] = (uint8_t)((i * 7 + seed) & 0xFF);
-    uint32_t fcs = bench_crc32(psdu, PSDU_LEN - 4);
+    uint32_t fcs       = bench_crc32(psdu, PSDU_LEN - 4);
     psdu[PSDU_LEN - 4] = (uint8_t)(fcs & 0xFF);
     psdu[PSDU_LEN - 3] = (uint8_t)((fcs >> 8) & 0xFF);
     psdu[PSDU_LEN - 2] = (uint8_t)((fcs >> 16) & 0xFF);
@@ -81,81 +79,80 @@ typedef struct {
     size_t n_samples;
 } bench_frame;
 
-static bench_frame generate_legacy(lib80211_fft_plan *plan, int rate_mbps)
-{
+static bench_frame generate_legacy(lib80211_fft_plan *plan, int rate_mbps) {
     bench_frame f = {0};
     uint8_t psdu[100];
     make_psdu(psdu, rate_mbps);
 
     lib80211_tx_legacy_params p = {
-        .rate_mbps = rate_mbps,
-        .psdu = psdu,
-        .psdu_len = PSDU_LEN,
+        .rate_mbps      = rate_mbps,
+        .psdu           = psdu,
+        .psdu_len       = PSDU_LEN,
         .scrambler_seed = 0x5D,
     };
 
     size_t max_samp = lib80211_tx_legacy_samples(&p) + 200;
-    f.re = (float *)calloc(max_samp, sizeof(float));
-    f.im = (float *)calloc(max_samp, sizeof(float));
+    f.re            = (float *)calloc(max_samp, sizeof(float));
+    f.im            = (float *)calloc(max_samp, sizeof(float));
 
-    size_t n_tx = lib80211_tx_legacy(plan, &p, f.re + 100, f.im + 100);
-    f.n_samples = 100 + n_tx + 100;
-    if (f.n_samples > max_samp) f.n_samples = max_samp;
+    size_t n_tx     = lib80211_tx_legacy(plan, &p, f.re + 100, f.im + 100);
+    f.n_samples     = 100 + n_tx + 100;
+    if (f.n_samples > max_samp)
+        f.n_samples = max_samp;
     return f;
 }
 
-static bench_frame generate_ht(lib80211_fft_plan *plan, int mcs, bool ldpc)
-{
+static bench_frame generate_ht(lib80211_fft_plan *plan, int mcs, bool ldpc) {
     bench_frame f = {0};
     uint8_t psdu[100];
     make_psdu(psdu, mcs + 100);
 
     lib80211_tx_ht_params p = {
-        .mcs = mcs,
-        .psdu = psdu,
-        .psdu_len = PSDU_LEN,
+        .mcs            = mcs,
+        .psdu           = psdu,
+        .psdu_len       = PSDU_LEN,
         .scrambler_seed = 0x5D,
-        .short_gi = false,
-        .ldpc = ldpc,
+        .short_gi       = false,
+        .ldpc           = ldpc,
     };
 
     size_t max_samp = lib80211_tx_ht_samples(&p) + 200;
-    f.re = (float *)calloc(max_samp, sizeof(float));
-    f.im = (float *)calloc(max_samp, sizeof(float));
+    f.re            = (float *)calloc(max_samp, sizeof(float));
+    f.im            = (float *)calloc(max_samp, sizeof(float));
 
-    size_t n_tx = lib80211_tx_ht(plan, &p, f.re + 100, f.im + 100);
-    f.n_samples = 100 + n_tx + 100;
-    if (f.n_samples > max_samp) f.n_samples = max_samp;
+    size_t n_tx     = lib80211_tx_ht(plan, &p, f.re + 100, f.im + 100);
+    f.n_samples     = 100 + n_tx + 100;
+    if (f.n_samples > max_samp)
+        f.n_samples = max_samp;
     return f;
 }
 
-static bench_frame generate_vht(lib80211_fft_plan *plan, int mcs, bool ldpc)
-{
+static bench_frame generate_vht(lib80211_fft_plan *plan, int mcs, bool ldpc) {
     bench_frame f = {0};
     uint8_t psdu[100];
     make_psdu(psdu, mcs + 200);
 
     lib80211_tx_vht_params p = {
-        .mcs = mcs,
-        .psdu = psdu,
-        .psdu_len = PSDU_LEN,
+        .mcs            = mcs,
+        .psdu           = psdu,
+        .psdu_len       = PSDU_LEN,
         .scrambler_seed = 0x5D,
-        .short_gi = false,
-        .ldpc = ldpc,
+        .short_gi       = false,
+        .ldpc           = ldpc,
     };
 
     size_t max_samp = lib80211_tx_vht_samples(&p) + 200;
-    f.re = (float *)calloc(max_samp, sizeof(float));
-    f.im = (float *)calloc(max_samp, sizeof(float));
+    f.re            = (float *)calloc(max_samp, sizeof(float));
+    f.im            = (float *)calloc(max_samp, sizeof(float));
 
-    size_t n_tx = lib80211_tx_vht(plan, &p, f.re + 100, f.im + 100);
-    f.n_samples = 100 + n_tx + 100;
-    if (f.n_samples > max_samp) f.n_samples = max_samp;
+    size_t n_tx     = lib80211_tx_vht(plan, &p, f.re + 100, f.im + 100);
+    f.n_samples     = 100 + n_tx + 100;
+    if (f.n_samples > max_samp)
+        f.n_samples = max_samp;
     return f;
 }
 
-static void free_frame(bench_frame *f)
-{
+static void free_frame(bench_frame *f) {
     free(f->re);
     free(f->im);
     f->re = NULL;
@@ -166,8 +163,7 @@ static void free_frame(bench_frame *f)
  * Run decode benchmark for a given pre-generated frame.
  * Adjusts iteration count to run for at least 1 second.
  */
-static void bench_decode_one(lib80211_fft_plan *plan, const char *name, bench_frame *f)
-{
+static void bench_decode_one(lib80211_fft_plan *plan, const char *name, bench_frame *f) {
     /* Warm up */
     lib80211_rx_result result;
     for (int i = 0; i < 5; i++) {
@@ -183,24 +179,24 @@ static void bench_decode_one(lib80211_fft_plan *plan, const char *name, bench_fr
             lib80211_rx_decode(plan, f->re, f->im, f->n_samples, &result);
         }
         elapsed = get_time_sec() - t0;
-        if (elapsed >= 1.0) break;
+        if (elapsed >= 1.0)
+            break;
         n_iters *= 2;
-        if (n_iters > 100000) break; /* safety */
+        if (n_iters > 100000)
+            break; /* safety */
     }
 
     double fps = (double)n_iters / elapsed;
-    double us = elapsed * 1e6 / (double)n_iters;
+    double us  = elapsed * 1e6 / (double)n_iters;
 
-    printf("  %-24s: %7.0f frames/sec  %7.1f us/frame  (%d iters)\n",
-           name, fps, us, n_iters);
+    printf("  %-24s: %7.0f frames/sec  %7.1f us/frame  (%d iters)\n", name, fps, us, n_iters);
 }
 
 /* ========================================================================
  * Encode benchmark helpers
  * ======================================================================== */
 
-typedef void (*encode_fn)(lib80211_fft_plan *plan, void *params,
-                          float *out_re, float *out_im);
+typedef void (*encode_fn)(lib80211_fft_plan *plan, void *params, float *out_re, float *out_im);
 
 typedef struct {
     const char *name;
@@ -209,33 +205,29 @@ typedef struct {
     encode_fn fn;
 } bench_encode_config;
 
-static void encode_legacy_wrapper(lib80211_fft_plan *plan, void *params,
-                                  float *out_re, float *out_im)
-{
-    lib80211_tx_legacy(plan, (const lib80211_tx_legacy_params *)params,
-                       out_re, out_im);
+static void
+encode_legacy_wrapper(lib80211_fft_plan *plan, void *params, float *out_re, float *out_im) {
+    lib80211_tx_legacy(plan, (const lib80211_tx_legacy_params *)params, out_re, out_im);
 }
 
-static void encode_ht_wrapper(lib80211_fft_plan *plan, void *params,
-                              float *out_re, float *out_im)
-{
-    lib80211_tx_ht(plan, (const lib80211_tx_ht_params *)params,
-                   out_re, out_im);
+static void encode_ht_wrapper(lib80211_fft_plan *plan, void *params, float *out_re, float *out_im) {
+    lib80211_tx_ht(plan, (const lib80211_tx_ht_params *)params, out_re, out_im);
 }
 
-static void encode_vht_wrapper(lib80211_fft_plan *plan, void *params,
-                               float *out_re, float *out_im)
-{
-    lib80211_tx_vht(plan, (const lib80211_tx_vht_params *)params,
-                    out_re, out_im);
+static void
+encode_vht_wrapper(lib80211_fft_plan *plan, void *params, float *out_re, float *out_im) {
+    lib80211_tx_vht(plan, (const lib80211_tx_vht_params *)params, out_re, out_im);
 }
 
-static void bench_encode_one(lib80211_fft_plan *plan, const char *name,
-                             encode_fn fn, void *params, size_t max_samples)
-{
+static void bench_encode_one(
+    lib80211_fft_plan *plan, const char *name, encode_fn fn, void *params, size_t max_samples) {
     float *out_re = (float *)calloc(max_samples, sizeof(float));
     float *out_im = (float *)calloc(max_samples, sizeof(float));
-    if (!out_re || !out_im) { free(out_re); free(out_im); return; }
+    if (!out_re || !out_im) {
+        free(out_re);
+        free(out_im);
+        return;
+    }
 
     /* Warm up */
     for (int i = 0; i < 5; i++) {
@@ -251,16 +243,17 @@ static void bench_encode_one(lib80211_fft_plan *plan, const char *name,
             fn(plan, params, out_re, out_im);
         }
         elapsed = get_time_sec() - t0;
-        if (elapsed >= 1.0) break;
+        if (elapsed >= 1.0)
+            break;
         n_iters *= 2;
-        if (n_iters > 100000) break;
+        if (n_iters > 100000)
+            break;
     }
 
     double fps = (double)n_iters / elapsed;
-    double us = elapsed * 1e6 / (double)n_iters;
+    double us  = elapsed * 1e6 / (double)n_iters;
 
-    printf("  %-24s: %7.0f frames/sec  %7.1f us/frame  (%d iters)\n",
-           name, fps, us, n_iters);
+    printf("  %-24s: %7.0f frames/sec  %7.1f us/frame  (%d iters)\n", name, fps, us, n_iters);
 
     free(out_re);
     free(out_im);
@@ -270,8 +263,7 @@ static void bench_encode_one(lib80211_fft_plan *plan, const char *name,
  * Main
  * ======================================================================== */
 
-int main(void)
-{
+int main(void) {
     printf("bench: lib80211 encode/decode throughput (100-byte PSDU)\n");
     printf("============================================================\n\n");
 
@@ -307,7 +299,7 @@ int main(void)
     printf("\n  HT (BCC):\n");
     {
         int mcs_list[] = {0, 2, 4, 7};
-        int n_mcs = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
+        int n_mcs      = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
         for (int i = 0; i < n_mcs; i++) {
             char name[32];
             snprintf(name, sizeof(name), "ht_mcs%d_bcc", mcs_list[i]);
@@ -321,7 +313,7 @@ int main(void)
     printf("\n  HT (LDPC):\n");
     {
         int mcs_list[] = {0, 4, 7};
-        int n_mcs = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
+        int n_mcs      = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
         for (int i = 0; i < n_mcs; i++) {
             char name[32];
             snprintf(name, sizeof(name), "ht_mcs%d_ldpc", mcs_list[i]);
@@ -335,7 +327,7 @@ int main(void)
     printf("\n  VHT (BCC):\n");
     {
         int mcs_list[] = {0, 2, 4, 6, 8};
-        int n_mcs = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
+        int n_mcs      = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
         for (int i = 0; i < n_mcs; i++) {
             char name[32];
             snprintf(name, sizeof(name), "vht_mcs%d_bcc", mcs_list[i]);
@@ -349,7 +341,7 @@ int main(void)
     printf("\n  VHT (LDPC):\n");
     {
         int mcs_list[] = {0, 4, 8};
-        int n_mcs = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
+        int n_mcs      = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
         for (int i = 0; i < n_mcs; i++) {
             char name[32];
             snprintf(name, sizeof(name), "vht_mcs%d_ldpc", mcs_list[i]);
@@ -373,8 +365,10 @@ int main(void)
             char name[32];
             snprintf(name, sizeof(name), "legacy_%d_mbps", rates[i]);
             lib80211_tx_legacy_params p = {
-                .rate_mbps = rates[i], .psdu = psdu,
-                .psdu_len = PSDU_LEN, .scrambler_seed = 0x5D,
+                .rate_mbps      = rates[i],
+                .psdu           = psdu,
+                .psdu_len       = PSDU_LEN,
+                .scrambler_seed = 0x5D,
             };
             size_t max_s = lib80211_tx_legacy_samples(&p) + 100;
             bench_encode_one(plan, name, encode_legacy_wrapper, &p, max_s);
@@ -385,14 +379,17 @@ int main(void)
     printf("\n  HT (BCC):\n");
     {
         int mcs_list[] = {0, 2, 4, 7};
-        int n_mcs = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
+        int n_mcs      = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
         for (int i = 0; i < n_mcs; i++) {
             char name[32];
             snprintf(name, sizeof(name), "ht_mcs%d_bcc", mcs_list[i]);
             lib80211_tx_ht_params p = {
-                .mcs = mcs_list[i], .psdu = psdu,
-                .psdu_len = PSDU_LEN, .scrambler_seed = 0x5D,
-                .short_gi = false, .ldpc = false,
+                .mcs            = mcs_list[i],
+                .psdu           = psdu,
+                .psdu_len       = PSDU_LEN,
+                .scrambler_seed = 0x5D,
+                .short_gi       = false,
+                .ldpc           = false,
             };
             size_t max_s = lib80211_tx_ht_samples(&p) + 100;
             bench_encode_one(plan, name, encode_ht_wrapper, &p, max_s);
@@ -403,14 +400,17 @@ int main(void)
     printf("\n  HT (LDPC):\n");
     {
         int mcs_list[] = {0, 4, 7};
-        int n_mcs = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
+        int n_mcs      = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
         for (int i = 0; i < n_mcs; i++) {
             char name[32];
             snprintf(name, sizeof(name), "ht_mcs%d_ldpc", mcs_list[i]);
             lib80211_tx_ht_params p = {
-                .mcs = mcs_list[i], .psdu = psdu,
-                .psdu_len = PSDU_LEN, .scrambler_seed = 0x5D,
-                .short_gi = false, .ldpc = true,
+                .mcs            = mcs_list[i],
+                .psdu           = psdu,
+                .psdu_len       = PSDU_LEN,
+                .scrambler_seed = 0x5D,
+                .short_gi       = false,
+                .ldpc           = true,
             };
             size_t max_s = lib80211_tx_ht_samples(&p) + 100;
             bench_encode_one(plan, name, encode_ht_wrapper, &p, max_s);
@@ -421,14 +421,17 @@ int main(void)
     printf("\n  VHT (BCC):\n");
     {
         int mcs_list[] = {0, 2, 4, 6, 8};
-        int n_mcs = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
+        int n_mcs      = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
         for (int i = 0; i < n_mcs; i++) {
             char name[32];
             snprintf(name, sizeof(name), "vht_mcs%d_bcc", mcs_list[i]);
             lib80211_tx_vht_params p = {
-                .mcs = mcs_list[i], .psdu = psdu,
-                .psdu_len = PSDU_LEN, .scrambler_seed = 0x5D,
-                .short_gi = false, .ldpc = false,
+                .mcs            = mcs_list[i],
+                .psdu           = psdu,
+                .psdu_len       = PSDU_LEN,
+                .scrambler_seed = 0x5D,
+                .short_gi       = false,
+                .ldpc           = false,
             };
             size_t max_s = lib80211_tx_vht_samples(&p) + 100;
             bench_encode_one(plan, name, encode_vht_wrapper, &p, max_s);
@@ -439,14 +442,17 @@ int main(void)
     printf("\n  VHT (LDPC):\n");
     {
         int mcs_list[] = {0, 4, 8};
-        int n_mcs = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
+        int n_mcs      = (int)(sizeof(mcs_list) / sizeof(mcs_list[0]));
         for (int i = 0; i < n_mcs; i++) {
             char name[32];
             snprintf(name, sizeof(name), "vht_mcs%d_ldpc", mcs_list[i]);
             lib80211_tx_vht_params p = {
-                .mcs = mcs_list[i], .psdu = psdu,
-                .psdu_len = PSDU_LEN, .scrambler_seed = 0x5D,
-                .short_gi = false, .ldpc = true,
+                .mcs            = mcs_list[i],
+                .psdu           = psdu,
+                .psdu_len       = PSDU_LEN,
+                .scrambler_seed = 0x5D,
+                .short_gi       = false,
+                .ldpc           = true,
             };
             size_t max_s = lib80211_tx_vht_samples(&p) + 100;
             bench_encode_one(plan, name, encode_vht_wrapper, &p, max_s);

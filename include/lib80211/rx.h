@@ -24,15 +24,15 @@ typedef enum {
  * ======================================================================== */
 
 typedef struct {
-    uint8_t psdu[4095];         /* Decoded PSDU bytes */
-    size_t psdu_len;            /* PSDU length in bytes */
-    lib80211_frame_type type;   /* Detected frame type */
-    int rate_mbps;              /* Legacy rate or 0 for HT/VHT */
-    int mcs;                    /* HT/VHT MCS index (-1 for legacy) */
-    bool fcs_valid;             /* FCS check passed */
-    bool short_gi;              /* Short GI used */
-    bool ldpc;                  /* LDPC coding used */
-    int n_symbols;              /* Number of OFDM data symbols decoded */
+    uint8_t psdu[4095];       /* Decoded PSDU bytes */
+    size_t psdu_len;          /* PSDU length in bytes */
+    lib80211_frame_type type; /* Detected frame type */
+    int rate_mbps;            /* Legacy rate or 0 for HT/VHT */
+    int mcs;                  /* HT/VHT MCS index (-1 for legacy) */
+    bool fcs_valid;           /* FCS check passed */
+    bool short_gi;            /* Short GI used */
+    bool ldpc;                /* LDPC coding used */
+    int n_symbols;            /* Number of OFDM data symbols decoded */
 } lib80211_rx_result;
 
 /* ========================================================================
@@ -44,8 +44,8 @@ typedef struct {
     lib80211_fft_plan *plan;
 
     /* Synchronization results */
-    size_t ltf_start;       /* sample index of first LTF FFT symbol */
-    float cfo_rad;          /* CFO in rad/sample */
+    size_t ltf_start; /* sample index of first LTF FFT symbol */
+    float cfo_rad;    /* CFO in rad/sample */
 
     /* CFO-corrected working buffer (caller-owned via rx_decode) */
     float *work_re;
@@ -58,9 +58,9 @@ typedef struct {
     float noise_var;
 
     /* L-SIG decoded values */
-    size_t sig_offset;      /* sample offset of SIGNAL symbol */
-    int lsig_rate_mbps;     /* L-SIG rate field */
-    uint16_t lsig_length;   /* L-SIG length field */
+    size_t sig_offset;    /* sample offset of SIGNAL symbol */
+    int lsig_rate_mbps;   /* L-SIG rate field */
+    uint16_t lsig_length; /* L-SIG length field */
 
     /* Refined channel estimate (L-LTF blended with L-SIG decision-directed).
      * Used for HT-SIG / VHT-SIG-A decode — temporally closer to those symbols. */
@@ -94,8 +94,10 @@ bool lib80211_fcs_check(const uint8_t *frame, size_t len);
  *         -1 on failure (no frame found or critical decode error)
  */
 int lib80211_rx_decode_s(lib80211_fft_plan *plan,
-                         const float *iq_real, const float *iq_imag,
-                         size_t n_samples, lib80211_scratch *scratch,
+                         const float *iq_real,
+                         const float *iq_imag,
+                         size_t n_samples,
+                         lib80211_scratch *scratch,
                          lib80211_rx_result *result);
 
 /**
@@ -113,7 +115,9 @@ int lib80211_rx_decode_s(lib80211_fft_plan *plan,
  *         -1 on failure (no frame found or critical decode error)
  */
 int lib80211_rx_decode(lib80211_fft_plan *plan,
-                       const float *iq_real, const float *iq_imag,
-                       size_t n_samples, lib80211_rx_result *result);
+                       const float *iq_real,
+                       const float *iq_imag,
+                       size_t n_samples,
+                       lib80211_rx_result *result);
 
 #endif /* LIB80211_RX_H */

@@ -13,12 +13,12 @@
  */
 
 /** Maximum codeword length */
-#define LIB80211_LDPC_MAX_CW  1944
+#define LIB80211_LDPC_MAX_CW 1944
 
 /** Expansion factors (Z) for each codeword length */
-#define LIB80211_LDPC_Z_648   27
-#define LIB80211_LDPC_Z_1296  54
-#define LIB80211_LDPC_Z_1944  81
+#define LIB80211_LDPC_Z_648 27
+#define LIB80211_LDPC_Z_1296 54
+#define LIB80211_LDPC_Z_1944 81
 
 /**
  * LDPC parity generator in CSR format (binary, data array omitted).
@@ -31,11 +31,11 @@
  *   col_idx[nnz]:      column indices of 1-entries
  */
 typedef struct {
-    int n_rows;               /* Number of parity bits (N-K) */
-    int n_cols;               /* Number of information bits (K) */
-    int nnz;                  /* Number of nonzero entries */
-    const uint32_t *row_ptr;  /* Row pointer array [n_rows + 1] */
-    const uint16_t *col_idx;  /* Column index array [nnz] */
+    int n_rows;              /* Number of parity bits (N-K) */
+    int n_cols;              /* Number of information bits (K) */
+    int nnz;                 /* Number of nonzero entries */
+    const uint32_t *row_ptr; /* Row pointer array [n_rows + 1] */
+    const uint16_t *col_idx; /* Column index array [nnz] */
 } lib80211_ldpc_pgen;
 
 /**
@@ -61,8 +61,8 @@ const lib80211_ldpc_pgen *lib80211_ldpc_get_pgen(int cw_len, int rate_n, int rat
  * @param rate_d      Rate denominator: 2, 3, 4, or 6
  * @return 0 on success, -1 on invalid parameters
  */
-int lib80211_ldpc_encode(const uint8_t *info_bits, uint8_t *codeword,
-                         int cw_len, int rate_n, int rate_d);
+int lib80211_ldpc_encode(
+    const uint8_t *info_bits, uint8_t *codeword, int cw_len, int rate_n, int rate_d);
 
 /**
  * LDPC DATA encoding for HT/VHT frames.
@@ -86,9 +86,14 @@ int lib80211_ldpc_encode(const uint8_t *info_bits, uint8_t *codeword,
  * @param ldpc_extra_out Output: 1 if LDPC extra symbol was added, 0 otherwise
  * @return 0 on success, -1 on error
  */
-int lib80211_ldpc_encode_data(const uint8_t *payload_bits, int n_payload,
-                              int n_dbps, int n_cbps, int cr_n, int cr_d,
-                              uint8_t *coded_out, int *n_sym_out,
+int lib80211_ldpc_encode_data(const uint8_t *payload_bits,
+                              int n_payload,
+                              int n_dbps,
+                              int n_cbps,
+                              int cr_n,
+                              int cr_d,
+                              uint8_t *coded_out,
+                              int *n_sym_out,
                               int *ldpc_extra_out);
 
 /**
@@ -109,8 +114,11 @@ int lib80211_ldpc_encode_data(const uint8_t *payload_bits, int n_payload,
  * @param max_iterations  Maximum BP iterations (0 = use default 30)
  * @return Number of iterations used (>0 = converged), 0 = failed to converge
  */
-int lib80211_ldpc_decode(const float *llr_in, uint8_t *decoded_bits,
-                         int cw_len, int rate_n, int rate_d,
+int lib80211_ldpc_decode(const float *llr_in,
+                         uint8_t *decoded_bits,
+                         int cw_len,
+                         int rate_n,
+                         int rate_d,
                          int max_iterations);
 
 /**
@@ -129,9 +137,13 @@ int lib80211_ldpc_decode(const float *llr_in, uint8_t *decoded_bits,
  * @param cr_d         Code rate denominator
  * @return 0 on success, -1 on failure
  */
-int lib80211_ldpc_decode_data(const float *llr_in, size_t total_soft,
+int lib80211_ldpc_decode_data(const float *llr_in,
+                              size_t total_soft,
                               uint8_t *decoded_out,
-                              int n_symbols, int n_dbps, int n_cbps,
-                              int cr_n, int cr_d);
+                              int n_symbols,
+                              int n_dbps,
+                              int n_cbps,
+                              int cr_n,
+                              int cr_d);
 
 #endif /* LIB80211_LDPC_H */

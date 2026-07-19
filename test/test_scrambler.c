@@ -87,7 +87,8 @@ static void test_scrambler_self_inverse(void) {
     TEST_BEGIN("scrambler_self_inverse");
 
     uint8_t data[128];
-    for (int i = 0; i < 128; i++) data[i] = (uint8_t)(i & 1);
+    for (int i = 0; i < 128; i++)
+        data[i] = (uint8_t)(i & 1);
 
     uint8_t scrambled[128];
     uint8_t recovered[128];

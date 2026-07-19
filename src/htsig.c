@@ -18,16 +18,15 @@ uint8_t lib80211_htsig_crc8(const uint8_t *bits, size_t n_bits) {
     uint8_t state = 0xFF;
     for (size_t i = 0; i < n_bits; i++) {
         uint8_t feedback = ((state >> 7) ^ bits[i]) & 1;
-        state = (uint8_t)((state << 1) & 0xFF);
+        state            = (uint8_t)((state << 1) & 0xFF);
         if (feedback)
             state ^= 0x07;
     }
     return state;
 }
 
-void lib80211_make_htsig_bits(int mcs, int length_bytes,
-                              bool short_gi, bool coding_ldpc,
-                              uint8_t *out_bits) {
+void lib80211_make_htsig_bits(
+    int mcs, int length_bytes, bool short_gi, bool coding_ldpc, uint8_t *out_bits) {
     /* 34 data bits */
     uint8_t data_bits[34];
     memset(data_bits, 0, sizeof(data_bits));
@@ -73,7 +72,7 @@ void lib80211_make_htsig_bits(int mcs, int length_bytes,
     memcpy(out_bits, data_bits, 34);
 
     /* CRC-8: ones-complement, MSB-first in bits [34:41] */
-    uint8_t crc = lib80211_htsig_crc8(data_bits, 34);
+    uint8_t crc     = lib80211_htsig_crc8(data_bits, 34);
     uint8_t crc_inv = (uint8_t)(~crc & 0xFF);
     for (int i = 0; i < 8; i++)
         out_bits[34 + i] = (uint8_t)((crc_inv >> (7 - i)) & 1);
@@ -83,9 +82,12 @@ void lib80211_make_htsig_bits(int mcs, int length_bytes,
 }
 
 void lib80211_make_htsig_symbols(lib80211_fft_plan *plan,
-                                 int mcs, int length_bytes,
-                                 bool short_gi, bool coding_ldpc,
-                                 float *out_real, float *out_imag) {
+                                 int mcs,
+                                 int length_bytes,
+                                 bool short_gi,
+                                 bool coding_ldpc,
+                                 float *out_real,
+                                 float *out_imag) {
     /* Generate 48 HT-SIG bits */
     uint8_t htsig_bits[48];
     lib80211_make_htsig_bits(mcs, length_bytes, short_gi, coding_ldpc, htsig_bits);
@@ -113,7 +115,7 @@ void lib80211_make_htsig_symbols(lib80211_fft_plan *plan,
         float qbpsk_real[48], qbpsk_imag[48];
         for (int i = 0; i < 48; i++) {
             qbpsk_real[i] = 0.0f;        /* -imag (imag is 0 for BPSK) */
-            qbpsk_imag[i] = mod_real[i];  /* real becomes imag */
+            qbpsk_imag[i] = mod_real[i]; /* real becomes imag */
         }
 
         /* Build frequency-domain symbol with legacy subcarrier mapping */
@@ -121,17 +123,17 @@ void lib80211_make_htsig_symbols(lib80211_fft_plan *plan,
         float freq_imag[64] = {0};
 
         for (int i = 0; i < 48; i++) {
-            int bin = LIB80211_DATA_BINS[i];
+            int bin        = LIB80211_DATA_BINS[i];
             freq_real[bin] = qbpsk_real[i];
             freq_imag[bin] = qbpsk_imag[i];
         }
 
         /* Pilots: legacy polarity at symbol index (sym + 1)
          * (L-SIG is symbol 0, HT-SIG1 is symbol 1, HT-SIG2 is symbol 2) */
-        int pol_idx = (sym + 1) % 127;
+        int pol_idx    = (sym + 1) % 127;
         float polarity = (float)LIB80211_PILOT_POLARITY[pol_idx];
         for (int i = 0; i < 4; i++) {
-            int bin = LIB80211_PILOT_BINS[i];
+            int bin        = LIB80211_PILOT_BINS[i];
             freq_real[bin] = polarity * LIB80211_PILOT_BASE[i];
             freq_imag[bin] = 0.0f;
         }

@@ -8,20 +8,20 @@
  * PHY constants
  * ======================================================================== */
 
-#define LIB80211_NFFT           64
-#define LIB80211_NCP            16
-#define LIB80211_NCP_SHORT      8       /* Short GI: 400 ns at 20 MSPS */
-#define LIB80211_SYMBOL_LEN     80      /* NFFT + NCP */
-#define LIB80211_SYMBOL_LEN_SGI 72      /* NFFT + NCP_SHORT */
-#define LIB80211_SAMPLE_RATE    20000000
+#define LIB80211_NFFT 64
+#define LIB80211_NCP 16
+#define LIB80211_NCP_SHORT 8       /* Short GI: 400 ns at 20 MSPS */
+#define LIB80211_SYMBOL_LEN 80     /* NFFT + NCP */
+#define LIB80211_SYMBOL_LEN_SGI 72 /* NFFT + NCP_SHORT */
+#define LIB80211_SAMPLE_RATE 20000000
 
-#define LIB80211_STF_SAMPLES    160
-#define LIB80211_LTF_SAMPLES    160
-#define LIB80211_PREAMBLE_SAMPLES 320   /* STF + LTF */
+#define LIB80211_STF_SAMPLES 160
+#define LIB80211_LTF_SAMPLES 160
+#define LIB80211_PREAMBLE_SAMPLES 320 /* STF + LTF */
 
-#define LIB80211_N_DATA_SC      48      /* Legacy data subcarriers */
-#define LIB80211_N_HT_DATA_SC   52      /* HT/VHT data subcarriers */
-#define LIB80211_N_PILOT_SC     4
+#define LIB80211_N_DATA_SC 48    /* Legacy data subcarriers */
+#define LIB80211_N_HT_DATA_SC 52 /* HT/VHT data subcarriers */
+#define LIB80211_N_PILOT_SC 4
 
 /* ========================================================================
  * Rate table (802.11a, Table 17-3)
@@ -29,13 +29,13 @@
 
 typedef struct {
     int rate_mbps;
-    uint8_t rate_bits;  /* 4-bit rate field (R1 at LSB) */
-    int mod_order;      /* bits per symbol (1=BPSK,2=QPSK,4=16QAM,6=64QAM) */
-    int cr_n;           /* code rate numerator */
-    int cr_d;           /* code rate denominator */
-    int n_cbps;         /* coded bits per symbol */
-    int n_dbps;         /* data bits per symbol */
-    int n_bpsc;         /* bits per subcarrier (same as mod_order) */
+    uint8_t rate_bits; /* 4-bit rate field (R1 at LSB) */
+    int mod_order;     /* bits per symbol (1=BPSK,2=QPSK,4=16QAM,6=64QAM) */
+    int cr_n;          /* code rate numerator */
+    int cr_d;          /* code rate denominator */
+    int n_cbps;        /* coded bits per symbol */
+    int n_dbps;        /* data bits per symbol */
+    int n_bpsc;        /* bits per subcarrier (same as mod_order) */
 } lib80211_rate_info;
 
 /* 8 legacy rates, indexed 0-7. Use lib80211_rate_lookup() to find by rate_mbps. */
@@ -66,12 +66,12 @@ extern const int8_t LIB80211_PILOT_POLARITY[127];
 
 typedef struct {
     int mcs;
-    int mod_order;      /* bits per symbol (1=BPSK,2=QPSK,4=16QAM,6=64QAM) */
-    int cr_n;           /* code rate numerator */
-    int cr_d;           /* code rate denominator */
-    int n_cbps;         /* coded bits per symbol (52 * bpsc) */
-    int n_dbps;         /* data bits per symbol */
-    int n_bpsc;         /* bits per subcarrier */
+    int mod_order; /* bits per symbol (1=BPSK,2=QPSK,4=16QAM,6=64QAM) */
+    int cr_n;      /* code rate numerator */
+    int cr_d;      /* code rate denominator */
+    int n_cbps;    /* coded bits per symbol (52 * bpsc) */
+    int n_dbps;    /* data bits per symbol */
+    int n_bpsc;    /* bits per subcarrier */
 } lib80211_ht_mcs_info;
 
 /* MCS 0-7, indexed directly. */

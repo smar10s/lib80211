@@ -16,8 +16,10 @@
  * @param n_input_bits  Number of input bits
  * @param add_tail      If true, append 6 zero tail bits to flush encoder
  */
-void lib80211_conv_encode(const uint8_t *in_bits, uint8_t *out_bits,
-                          size_t n_input_bits, bool add_tail);
+void lib80211_conv_encode(const uint8_t *in_bits,
+                          uint8_t *out_bits,
+                          size_t n_input_bits,
+                          bool add_tail);
 
 /**
  * Puncture coded bits according to 802.11 puncturing patterns.
@@ -31,8 +33,8 @@ void lib80211_conv_encode(const uint8_t *in_bits, uint8_t *out_bits,
  * @param cr_d         Code rate denominator
  * @return Number of output bits, or 0 on error
  */
-size_t lib80211_puncture(const uint8_t *in_bits, uint8_t *out_bits,
-                         size_t n_coded_bits, int cr_n, int cr_d);
+size_t lib80211_puncture(
+    const uint8_t *in_bits, uint8_t *out_bits, size_t n_coded_bits, int cr_n, int cr_d);
 
 /**
  * Depuncture soft bits by inserting erasures (0.0f) at punctured positions.
@@ -48,8 +50,8 @@ size_t lib80211_puncture(const uint8_t *in_bits, uint8_t *out_bits,
  * @param cr_d      Code rate denominator
  * @return Number of output soft bits, or 0 on error
  */
-size_t lib80211_depuncture(const float *in_soft, float *out_soft,
-                           size_t n_input, int cr_n, int cr_d);
+size_t
+lib80211_depuncture(const float *in_soft, float *out_soft, size_t n_input, int cr_n, int cr_d);
 
 /**
  * Soft-decision Viterbi decoder (K=7, rate-1/2).
@@ -64,7 +66,9 @@ size_t lib80211_depuncture(const float *in_soft, float *out_soft,
  * @param n_data_bits  Number of data bits to recover (excluding tail)
  * @return 0 on success, -1 on allocation failure
  */
-int lib80211_viterbi_decode(const float *soft_bits, uint8_t *out_bits,
-                            size_t n_coded_bits, size_t n_data_bits);
+int lib80211_viterbi_decode(const float *soft_bits,
+                            uint8_t *out_bits,
+                            size_t n_coded_bits,
+                            size_t n_data_bits);
 
 #endif /* LIB80211_FEC_H */

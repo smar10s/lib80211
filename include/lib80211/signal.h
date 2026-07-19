@@ -29,9 +29,8 @@ int lib80211_make_signal_bits(int rate_mbps, int length_bytes, uint8_t *out_bits
  * @param out_real      Output: 80 time-domain I samples
  * @param out_imag      Output: 80 time-domain Q samples
  */
-void lib80211_make_lsig_symbol(lib80211_fft_plan *plan,
-                               int rate_mbps, int length_bytes,
-                               float *out_real, float *out_imag);
+void lib80211_make_lsig_symbol(
+    lib80211_fft_plan *plan, int rate_mbps, int length_bytes, float *out_real, float *out_imag);
 
 /* ========================================================================
  * HT-SIG (802.11n, Section 19.3.9.4.3)
@@ -46,9 +45,8 @@ void lib80211_make_lsig_symbol(lib80211_fft_plan *plan,
  * @param coding_ldpc   true for LDPC, false for BCC
  * @param out_bits      Output: 48 bits (one bit per byte)
  */
-void lib80211_make_htsig_bits(int mcs, int length_bytes,
-                              bool short_gi, bool coding_ldpc,
-                              uint8_t *out_bits);
+void lib80211_make_htsig_bits(
+    int mcs, int length_bytes, bool short_gi, bool coding_ldpc, uint8_t *out_bits);
 
 /**
  * CRC-8 for HT-SIG (poly x^8+x^2+x+1, init 0xFF).
@@ -74,9 +72,12 @@ uint8_t lib80211_htsig_crc8(const uint8_t *bits, size_t n_bits);
  * @param out_imag      Output: 160 time-domain Q samples
  */
 void lib80211_make_htsig_symbols(lib80211_fft_plan *plan,
-                                 int mcs, int length_bytes,
-                                 bool short_gi, bool coding_ldpc,
-                                 float *out_real, float *out_imag);
+                                 int mcs,
+                                 int length_bytes,
+                                 bool short_gi,
+                                 bool coding_ldpc,
+                                 float *out_real,
+                                 float *out_imag);
 
 /* ========================================================================
  * VHT-SIG-A (802.11ac, Section 21.3.8.3.3)
@@ -92,9 +93,8 @@ void lib80211_make_htsig_symbols(lib80211_fft_plan *plan,
  * @param ldpc_extra    LDPC extra symbol flag
  * @param out_bits      Output: 48 bits (one bit per byte)
  */
-void lib80211_make_vhtsiga_bits(int mcs, int length_bytes, bool short_gi,
-                                bool coding_ldpc, int ldpc_extra,
-                                uint8_t *out_bits);
+void lib80211_make_vhtsiga_bits(
+    int mcs, int length_bytes, bool short_gi, bool coding_ldpc, int ldpc_extra, uint8_t *out_bits);
 
 /**
  * Generate 2 VHT-SIG-A OFDM symbols (160 time-domain samples total).
@@ -112,9 +112,13 @@ void lib80211_make_vhtsiga_bits(int mcs, int length_bytes, bool short_gi,
  * @param out_imag      Output: 160 time-domain Q samples
  */
 void lib80211_make_vhtsiga_symbols(lib80211_fft_plan *plan,
-                                   int mcs, int length_bytes, bool short_gi,
-                                   bool coding_ldpc, int ldpc_extra,
-                                   float *out_real, float *out_imag);
+                                   int mcs,
+                                   int length_bytes,
+                                   bool short_gi,
+                                   bool coding_ldpc,
+                                   int ldpc_extra,
+                                   float *out_real,
+                                   float *out_imag);
 
 /* ========================================================================
  * VHT-SIG-B (802.11ac, Section 21.3.8.3.6)
@@ -141,6 +145,7 @@ void lib80211_make_vhtsigb_bits(int psdu_length, uint8_t *out_bits);
  */
 void lib80211_make_vhtsigb_symbol(lib80211_fft_plan *plan,
                                   int psdu_length,
-                                  float *out_real, float *out_imag);
+                                  float *out_real,
+                                  float *out_imag);
 
 #endif /* LIB80211_SIGNAL_H */

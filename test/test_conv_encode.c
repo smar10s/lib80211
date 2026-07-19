@@ -19,10 +19,14 @@
  */
 static uint8_t *build_scrambled_input(void) {
     test_vector *psdu_vec = vector_load("annex_i1_psdu");
-    if (!psdu_vec || !psdu_vec->hex_octets) return NULL;
+    if (!psdu_vec || !psdu_vec->hex_octets)
+        return NULL;
 
     uint8_t *input = calloc(864, 1);
-    if (!input) { vector_free(psdu_vec); return NULL; }
+    if (!input) {
+        vector_free(psdu_vec);
+        return NULL;
+    }
 
     /* SERVICE(16 zeros) + PSDU(800 bits LSB-first) + tail(6) + pad(42) */
     for (size_t byte_idx = 0; byte_idx < 100 && byte_idx < psdu_vec->n_octets; byte_idx++) {
@@ -33,7 +37,11 @@ static uint8_t *build_scrambled_input(void) {
     }
 
     uint8_t *scrambled = malloc(864);
-    if (!scrambled) { free(input); vector_free(psdu_vec); return NULL; }
+    if (!scrambled) {
+        free(input);
+        vector_free(psdu_vec);
+        return NULL;
+    }
 
     lib80211_scramble(input, scrambled, 864, ANNEX_I1_SEED);
 
@@ -59,7 +67,8 @@ static void test_encode_puncture_annex_i1(void) {
     test_vector *vec = vector_load("annex_i1_data_encoded");
     if (!vec || !vec->bits || vec->n_bits != 1152) {
         TEST_FAIL("cannot load annex_i1_data_encoded.json (expected 1152 bits)");
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -71,7 +80,7 @@ static void test_encode_puncture_annex_i1(void) {
     }
 
     /* Conv encode (no tail — tail is already in the 864 bits) */
-    uint8_t coded[1728];  /* 864 * 2 */
+    uint8_t coded[1728]; /* 864 * 2 */
     lib80211_conv_encode(scrambled, coded, 864, false);
 
     /* Puncture at rate 3/4 */

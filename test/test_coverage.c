@@ -33,7 +33,7 @@ static void test_rate_lookup(void) {
     TEST_BEGIN("rate_lookup");
 
     int valid_rates[] = {6, 9, 12, 18, 24, 36, 48, 54};
-    int n_valid = (int)(sizeof(valid_rates) / sizeof(valid_rates[0]));
+    int n_valid       = (int)(sizeof(valid_rates) / sizeof(valid_rates[0]));
 
     for (int i = 0; i < n_valid; i++) {
         const lib80211_rate_info *info = lib80211_rate_lookup(valid_rates[i]);
@@ -49,13 +49,13 @@ static void test_rate_lookup(void) {
 
     /* Invalid rates should return NULL */
     int invalid_rates[] = {0, 5, 7, 100};
-    int n_invalid = (int)(sizeof(invalid_rates) / sizeof(invalid_rates[0]));
+    int n_invalid       = (int)(sizeof(invalid_rates) / sizeof(invalid_rates[0]));
 
     for (int i = 0; i < n_invalid; i++) {
         const lib80211_rate_info *info = lib80211_rate_lookup(invalid_rates[i]);
         if (info != NULL) {
-            TEST_FAIL("rate %d should return NULL, got rate_mbps=%d",
-                      invalid_rates[i], info->rate_mbps);
+            TEST_FAIL(
+                "rate %d should return NULL, got rate_mbps=%d", invalid_rates[i], info->rate_mbps);
             return;
         }
     }
@@ -73,35 +73,38 @@ static void test_sync_no_frame(lib80211_fft_plan *plan) {
     lib80211_sync_result result;
 
     /* All-zero buffer (1000 samples) */
-    size_t n = 1000;
+    size_t n  = 1000;
     float *re = (float *)calloc(n, sizeof(float));
     float *im = (float *)calloc(n, sizeof(float));
     if (!re || !im) {
         TEST_FAIL("malloc failed");
-        free(re); free(im);
+        free(re);
+        free(im);
         return;
     }
 
     int rc = lib80211_sync_detect(plan, re, im, n, &result);
     if (rc != -1) {
         TEST_FAIL("all-zero buffer: expected -1, got %d", rc);
-        free(re); free(im);
+        free(re);
+        free(im);
         return;
     }
 
     /* Random noise (small uncorrelated values via simple LCG) */
     uint32_t seed = 12345;
     for (size_t i = 0; i < n; i++) {
-        seed = seed * 1103515245u + 12345u;
+        seed  = seed * 1103515245u + 12345u;
         re[i] = ((float)(seed >> 16) / 65536.0f - 0.5f) * 0.001f;
-        seed = seed * 1103515245u + 12345u;
+        seed  = seed * 1103515245u + 12345u;
         im[i] = ((float)(seed >> 16) / 65536.0f - 0.5f) * 0.001f;
     }
 
     rc = lib80211_sync_detect(plan, re, im, n, &result);
     if (rc != -1) {
         TEST_FAIL("noise buffer: expected -1, got %d", rc);
-        free(re); free(im);
+        free(re);
+        free(im);
         return;
     }
 
@@ -109,19 +112,21 @@ static void test_sync_no_frame(lib80211_fft_plan *plan) {
     free(im);
 
     /* Buffer too short (100 samples) */
-    size_t short_n = 100;
+    size_t short_n  = 100;
     float *short_re = (float *)calloc(short_n, sizeof(float));
     float *short_im = (float *)calloc(short_n, sizeof(float));
     if (!short_re || !short_im) {
         TEST_FAIL("malloc failed");
-        free(short_re); free(short_im);
+        free(short_re);
+        free(short_im);
         return;
     }
 
     rc = lib80211_sync_detect(plan, short_re, short_im, short_n, &result);
     if (rc != -1) {
         TEST_FAIL("short buffer (100): expected -1, got %d", rc);
-        free(short_re); free(short_im);
+        free(short_re);
+        free(short_im);
         return;
     }
 
@@ -146,13 +151,11 @@ static void test_channel_estimate(lib80211_fft_plan *plan) {
     float H_real[64], H_imag[64];
     float noise_var = 0.0f;
 
-    lib80211_estimate_channel(plan,
-                              ltf_re + 32, ltf_im + 32,
-                              H_real, H_imag, &noise_var);
+    lib80211_estimate_channel(plan, ltf_re + 32, ltf_im + 32, H_real, H_imag, &noise_var);
 
     /* On a perfect channel, H should be ~1+0j on active subcarriers.
      * Check data + pilot subcarriers. */
-    int ok = 1;
+    int ok        = 1;
     float max_err = 0.0f;
 
     for (int k = 0; k < 64; k++) {
@@ -164,7 +167,7 @@ static void test_channel_estimate(lib80211_fft_plan *plan) {
 
         float err_r = fabsf(H_real[k] - 1.0f);
         float err_i = fabsf(H_imag[k]);
-        float err = (err_r > err_i) ? err_r : err_i;
+        float err   = (err_r > err_i) ? err_r : err_i;
         if (err > max_err)
             max_err = err;
     }
@@ -198,16 +201,16 @@ static void test_equalize(void) {
     float known_real[64], known_imag[64];
 
     for (int k = 0; k < 64; k++) {
-        H_real[k] = 1.5f;
-        H_imag[k] = 0.5f;
+        H_real[k]     = 1.5f;
+        H_imag[k]     = 0.5f;
 
         /* Known data: alternating pattern */
         known_real[k] = (k % 2 == 0) ? 1.0f : -1.0f;
         known_imag[k] = (k % 3 == 0) ? 0.5f : -0.5f;
 
         /* Y = H * known_data (complex multiply) */
-        Y_real[k] = H_real[k] * known_real[k] - H_imag[k] * known_imag[k];
-        Y_imag[k] = H_real[k] * known_imag[k] + H_imag[k] * known_real[k];
+        Y_real[k]     = H_real[k] * known_real[k] - H_imag[k] * known_imag[k];
+        Y_imag[k]     = H_real[k] * known_imag[k] + H_imag[k] * known_real[k];
     }
 
     float out_real[64], out_imag[64];
@@ -218,7 +221,7 @@ static void test_equalize(void) {
     for (int k = 0; k < 64; k++) {
         float err_r = fabsf(out_real[k] - known_real[k]);
         float err_i = fabsf(out_imag[k] - known_imag[k]);
-        float err = (err_r > err_i) ? err_r : err_i;
+        float err   = (err_r > err_i) ? err_r : err_i;
         if (err > max_err)
             max_err = err;
     }
@@ -239,13 +242,13 @@ static void test_ldpc_encode_decode_data(void) {
     TEST_BEGIN("ldpc_encode_decode_data");
 
     /* MCS 0 params: BPSK, rate 1/2, n_dbps=26, n_cbps=52 */
-    int n_dbps = 26;
-    int n_cbps = 52;
-    int cr_n = 1;
-    int cr_d = 2;
+    int n_dbps       = 26;
+    int n_cbps       = 52;
+    int cr_n         = 1;
+    int cr_d         = 2;
 
     /* Create a known payload: 100 bytes = 800 bits, plus 16 SERVICE bits = 816 bits */
-    int n_payload = 816;
+    int n_payload    = 816;
     uint8_t *payload = (uint8_t *)calloc(n_payload, sizeof(uint8_t));
     if (!payload) {
         TEST_FAIL("malloc failed");
@@ -258,35 +261,37 @@ static void test_ldpc_encode_decode_data(void) {
     }
 
     /* Encode */
-    int n_sym_out = 0;
+    int n_sym_out      = 0;
     int ldpc_extra_out = 0;
     /* Max output: conservative upper bound */
-    int max_syms = (n_payload + n_dbps - 1) / n_dbps + 2;
-    uint8_t *coded = (uint8_t *)calloc((size_t)max_syms * (size_t)n_cbps, sizeof(uint8_t));
+    int max_syms       = (n_payload + n_dbps - 1) / n_dbps + 2;
+    uint8_t *coded     = (uint8_t *)calloc((size_t)max_syms * (size_t)n_cbps, sizeof(uint8_t));
     if (!coded) {
         TEST_FAIL("malloc failed");
         free(payload);
         return;
     }
 
-    int rc = lib80211_ldpc_encode_data(payload, n_payload,
-                                       n_dbps, n_cbps, cr_n, cr_d,
-                                       coded, &n_sym_out, &ldpc_extra_out);
+    int rc = lib80211_ldpc_encode_data(
+        payload, n_payload, n_dbps, n_cbps, cr_n, cr_d, coded, &n_sym_out, &ldpc_extra_out);
     if (rc != 0) {
         TEST_FAIL("ldpc_encode_data returned %d", rc);
-        free(payload); free(coded);
+        free(payload);
+        free(coded);
         return;
     }
 
     if (n_sym_out <= 0) {
         TEST_FAIL("n_sym_out=%d (expected > 0)", n_sym_out);
-        free(payload); free(coded);
+        free(payload);
+        free(coded);
         return;
     }
 
     if (ldpc_extra_out != 0 && ldpc_extra_out != 1) {
         TEST_FAIL("ldpc_extra_out=%d (expected 0 or 1)", ldpc_extra_out);
-        free(payload); free(coded);
+        free(payload);
+        free(coded);
         return;
     }
 
@@ -295,10 +300,11 @@ static void test_ldpc_encode_decode_data(void) {
     /* Convert coded bits to LLRs: bit 0 -> +1.0, bit 1 -> -1.0
      * (positive LLR = bit 0 more likely, matches LDPC decode convention) */
     size_t total_soft = (size_t)n_sym_out * (size_t)n_cbps;
-    float *llrs = (float *)malloc(total_soft * sizeof(float));
+    float *llrs       = (float *)malloc(total_soft * sizeof(float));
     if (!llrs) {
         TEST_FAIL("malloc failed");
-        free(payload); free(coded);
+        free(payload);
+        free(coded);
         return;
     }
 
@@ -310,16 +316,20 @@ static void test_ldpc_encode_decode_data(void) {
     uint8_t *decoded = (uint8_t *)calloc((size_t)n_sym_out * (size_t)n_dbps, sizeof(uint8_t));
     if (!decoded) {
         TEST_FAIL("malloc failed");
-        free(payload); free(coded); free(llrs);
+        free(payload);
+        free(coded);
+        free(llrs);
         return;
     }
 
-    rc = lib80211_ldpc_decode_data(llrs, total_soft,
-                                   decoded, n_sym_out, n_dbps, n_cbps,
-                                   cr_n, cr_d);
+    rc =
+        lib80211_ldpc_decode_data(llrs, total_soft, decoded, n_sym_out, n_dbps, n_cbps, cr_n, cr_d);
     if (rc != 0) {
         TEST_FAIL("ldpc_decode_data returned %d", rc);
-        free(payload); free(coded); free(llrs); free(decoded);
+        free(payload);
+        free(coded);
+        free(llrs);
+        free(decoded);
         return;
     }
 
@@ -329,7 +339,9 @@ static void test_ldpc_encode_decode_data(void) {
         if (decoded[i] != payload[i]) {
             if (mismatches == 0) {
                 printf("    first mismatch at bit %d: expected %d, got %d\n",
-                       i, payload[i], decoded[i]);
+                       i,
+                       payload[i],
+                       decoded[i]);
             }
             mismatches++;
         }
@@ -359,9 +371,9 @@ static void test_rx_classify_legacy(lib80211_fft_plan *plan) {
     memset(psdu, 0xAB, sizeof(psdu));
 
     lib80211_tx_legacy_params params = {
-        .rate_mbps = 24,
-        .psdu = psdu,
-        .psdu_len = sizeof(psdu),
+        .rate_mbps      = 24,
+        .psdu           = psdu,
+        .psdu_len       = sizeof(psdu),
         .scrambler_seed = 0x5D,
     };
 
@@ -375,14 +387,16 @@ static void test_rx_classify_legacy(lib80211_fft_plan *plan) {
     float *tx_im = (float *)malloc(n_samp * sizeof(float));
     if (!tx_re || !tx_im) {
         TEST_FAIL("malloc failed");
-        free(tx_re); free(tx_im);
+        free(tx_re);
+        free(tx_im);
         return;
     }
 
     size_t written = lib80211_tx_legacy(plan, &params, tx_re, tx_im);
     if (written == 0) {
         TEST_FAIL("tx_legacy returned 0");
-        free(tx_re); free(tx_im);
+        free(tx_re);
+        free(tx_im);
         return;
     }
 
@@ -393,7 +407,8 @@ static void test_rx_classify_legacy(lib80211_fft_plan *plan) {
     int rc = lib80211_rx_decode(plan, tx_re, tx_im, written, &result);
     if (rc != 0) {
         TEST_FAIL("rx_decode returned %d (no frame detected)", rc);
-        free(tx_re); free(tx_im);
+        free(tx_re);
+        free(tx_im);
         return;
     }
 
@@ -428,8 +443,8 @@ static void test_rng_normal(void) {
     lib80211_rng rng;
     lib80211_rng_seed(&rng, 42);
 
-    int n = 10000;
-    double sum = 0.0;
+    int n         = 10000;
+    double sum    = 0.0;
     double sum_sq = 0.0;
 
     for (int i = 0; i < n; i++) {
@@ -438,9 +453,9 @@ static void test_rng_normal(void) {
         sum_sq += (double)x * (double)x;
     }
 
-    double mean = sum / (double)n;
+    double mean     = sum / (double)n;
     double variance = sum_sq / (double)n - mean * mean;
-    double stddev = sqrt(variance);
+    double stddev   = sqrt(variance);
 
     printf("    mean=%.4f, stddev=%.4f (n=%d)\n", mean, stddev, n);
 

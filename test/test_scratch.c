@@ -8,8 +8,7 @@
 #include <string.h>
 #include <stdint.h>
 
-static void test_basic_alloc(void)
-{
+static void test_basic_alloc(void) {
     TEST_BEGIN("scratch_basic_alloc");
 
     uint8_t mem[1024];
@@ -38,8 +37,7 @@ static void test_basic_alloc(void)
     TEST_PASS();
 }
 
-static void test_alignment(void)
-{
+static void test_alignment(void) {
     TEST_BEGIN("scratch_alignment");
 
     uint8_t mem[4096];
@@ -68,8 +66,7 @@ static void test_alignment(void)
     TEST_PASS();
 }
 
-static void test_exhaustion(void)
-{
+static void test_exhaustion(void) {
     TEST_BEGIN("scratch_exhaustion");
 
     uint8_t mem[256];
@@ -93,8 +90,7 @@ static void test_exhaustion(void)
     TEST_PASS();
 }
 
-static void test_reset(void)
-{
+static void test_reset(void) {
     TEST_BEGIN("scratch_reset");
 
     uint8_t mem[256];
@@ -125,8 +121,7 @@ static void test_reset(void)
     TEST_PASS();
 }
 
-static void test_null_safety(void)
-{
+static void test_null_safety(void) {
     TEST_BEGIN("scratch_null_safety");
 
     /* NULL scratch */
@@ -155,19 +150,18 @@ static void test_null_safety(void)
     }
 
     /* NULL init */
-    lib80211_scratch_init(NULL, mem, sizeof(mem));  /* should not crash */
-    lib80211_scratch_reset(NULL);                   /* should not crash */
+    lib80211_scratch_init(NULL, mem, sizeof(mem)); /* should not crash */
+    lib80211_scratch_reset(NULL);                  /* should not crash */
 
     TEST_PASS();
 }
 
-static void test_sizing_macros(void)
-{
+static void test_sizing_macros(void) {
     TEST_BEGIN("scratch_sizing_macros");
 
     /* Verify macros produce reasonable values */
-    size_t rx_size = LIB80211_SCRATCH_RX_SIZE(20000);
-    size_t tx_size = LIB80211_SCRATCH_TX_SIZE;
+    size_t rx_size  = LIB80211_SCRATCH_RX_SIZE(20000);
+    size_t tx_size  = LIB80211_SCRATCH_TX_SIZE;
     size_t max_size = LIB80211_SCRATCH_MAX;
 
     /* RX for 20k samples should be > 160 KB (IQ alone is 160 KB) */
@@ -184,16 +178,14 @@ static void test_sizing_macros(void)
 
     /* MAX should be >= both */
     if (max_size < rx_size || max_size < tx_size) {
-        TEST_FAIL("MAX (%zu) smaller than RX (%zu) or TX (%zu)",
-                  max_size, rx_size, tx_size);
+        TEST_FAIL("MAX (%zu) smaller than RX (%zu) or TX (%zu)", max_size, rx_size, tx_size);
         return;
     }
 
     TEST_PASS();
 }
 
-int main(void)
-{
+int main(void) {
     printf("test_scratch\n");
 
     test_basic_alloc();

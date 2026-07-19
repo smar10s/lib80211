@@ -6,14 +6,14 @@
 
 /* Frame Control values (little-endian as transmitted) */
 #define LIB80211_FC_ASSOC_REQ 0x0000
-#define LIB80211_FC_AUTH      0x00B0
-#define LIB80211_FC_BEACON    0x0080
-#define LIB80211_FC_DEAUTH    0x00C0
+#define LIB80211_FC_AUTH 0x00B0
+#define LIB80211_FC_BEACON 0x0080
+#define LIB80211_FC_DEAUTH 0x00C0
 
 /* Default values */
-#define LIB80211_BEACON_INTERVAL_DEFAULT  100   /* TU */
-#define LIB80211_CAPABILITIES_DEFAULT     0x0431
-#define LIB80211_DEAUTH_REASON_DEFAULT    7     /* Class 3 from nonassoc STA */
+#define LIB80211_BEACON_INTERVAL_DEFAULT 100 /* TU */
+#define LIB80211_CAPABILITIES_DEFAULT 0x0431
+#define LIB80211_DEAUTH_REASON_DEFAULT 7 /* Class 3 from nonassoc STA */
 
 /* Broadcast address */
 extern const uint8_t LIB80211_BROADCAST[6];
@@ -38,7 +38,8 @@ extern const uint8_t LIB80211_DEFAULT_BSSID[6];
  * @param timestamp     64-bit TSF timestamp
  * @return Bytes written, or 0 on error
  */
-size_t lib80211_build_beacon(uint8_t *buf, size_t buf_len,
+size_t lib80211_build_beacon(uint8_t *buf,
+                             size_t buf_len,
                              const char *ssid,
                              const uint8_t *bssid,
                              uint8_t channel,
@@ -58,7 +59,8 @@ size_t lib80211_build_beacon(uint8_t *buf, size_t buf_len,
  * @param reason    Reason code (IEEE 802.11-2020 Table 9-49)
  * @return Bytes written (26), or 0 on error
  */
-size_t lib80211_build_deauth(uint8_t *buf, size_t buf_len,
+size_t lib80211_build_deauth(uint8_t *buf,
+                             size_t buf_len,
                              const uint8_t *da,
                              const uint8_t *sa,
                              const uint8_t *bssid,
@@ -77,10 +79,8 @@ size_t lib80211_build_deauth(uint8_t *buf, size_t buf_len,
  * @param sta_mac   6-byte STA MAC (source address)
  * @return Bytes written, or 0 on error
  */
-size_t lib80211_build_assoc_req(uint8_t *buf, size_t buf_len,
-                                const char *ssid,
-                                const uint8_t *bssid,
-                                const uint8_t *sta_mac);
+size_t lib80211_build_assoc_req(
+    uint8_t *buf, size_t buf_len, const char *ssid, const uint8_t *bssid, const uint8_t *sta_mac);
 
 /**
  * Build an Open System Authentication frame PSDU (WITHOUT FCS).
@@ -93,9 +93,8 @@ size_t lib80211_build_assoc_req(uint8_t *buf, size_t buf_len,
  * @param sta_mac   6-byte STA MAC (source address)
  * @return Bytes written (30), or 0 on error
  */
-size_t lib80211_build_auth(uint8_t *buf, size_t buf_len,
-                           const uint8_t *bssid,
-                           const uint8_t *sta_mac);
+size_t
+lib80211_build_auth(uint8_t *buf, size_t buf_len, const uint8_t *bssid, const uint8_t *sta_mac);
 
 /**
  * Append FCS (CRC-32) to a frame buffer.

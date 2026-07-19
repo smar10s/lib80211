@@ -40,8 +40,7 @@ float lib80211_rng_normal(lib80211_rng *rng);
  * @param snr_db  Target SNR in dB (signal power / noise power)
  * @param rng     PRNG state (caller-owned, for deterministic tests)
  */
-void lib80211_add_awgn(float *re, float *im, size_t n,
-                       float snr_db, lib80211_rng *rng);
+void lib80211_add_awgn(float *re, float *im, size_t n, float snr_db, lib80211_rng *rng);
 
 /* ========================================================================
  * CFO (Carrier Frequency Offset)
@@ -57,17 +56,16 @@ void lib80211_add_awgn(float *re, float *im, size_t n,
  * @param sample_rate Sample rate in Hz (typically 20e6)
  * @param phi0        Initial phase in radians
  */
-void lib80211_add_cfo(float *re, float *im, size_t n,
-                      float cfo_hz, float sample_rate, float phi0);
+void lib80211_add_cfo(float *re, float *im, size_t n, float cfo_hz, float sample_rate, float phi0);
 
 /* ========================================================================
  * Multipath
  * ======================================================================== */
 
 typedef struct {
-    int delay;       /* delay in samples */
-    float gain_re;   /* complex tap gain, real part */
-    float gain_im;   /* complex tap gain, imag part */
+    int delay;     /* delay in samples */
+    float gain_re; /* complex tap gain, real part */
+    float gain_im; /* complex tap gain, imag part */
 } lib80211_multipath_tap;
 
 /* Preset channel models (matching Python py80211 definitions) */
@@ -93,9 +91,13 @@ extern const lib80211_multipath_tap LIB80211_MULTIPATH_SEVERE[];
  * @param tmp_re  Temporary buffer (n floats, caller-owned)
  * @param tmp_im  Temporary buffer (n floats, caller-owned)
  */
-void lib80211_apply_multipath(float *re, float *im, size_t n,
-                              const lib80211_multipath_tap *taps, int n_taps,
-                              float *tmp_re, float *tmp_im);
+void lib80211_apply_multipath(float *re,
+                              float *im,
+                              size_t n,
+                              const lib80211_multipath_tap *taps,
+                              int n_taps,
+                              float *tmp_re,
+                              float *tmp_im);
 
 /* ========================================================================
  * SFO (Sampling Frequency Offset)
@@ -118,8 +120,8 @@ void lib80211_apply_multipath(float *re, float *im, size_t n,
  * @param im_out    Output Q samples (caller-allocated)
  * @return Number of output samples written
  */
-size_t lib80211_add_sfo(const float *re_in, const float *im_in, size_t n_in,
-                        float ppm, float *re_out, float *im_out);
+size_t lib80211_add_sfo(
+    const float *re_in, const float *im_in, size_t n_in, float ppm, float *re_out, float *im_out);
 
 /**
  * Compute output sample count for SFO resampling.
@@ -142,8 +144,7 @@ size_t lib80211_sfo_output_len(size_t n_in, float ppm);
  * @param dc_i     DC offset on I channel (fraction of signal RMS, e.g. 0.05 = 5%)
  * @param dc_q     DC offset on Q channel (fraction of signal RMS)
  */
-void lib80211_add_dc_offset(float *re, float *im, size_t n,
-                            float dc_i, float dc_q);
+void lib80211_add_dc_offset(float *re, float *im, size_t n, float dc_i, float dc_q);
 
 /* ========================================================================
  * IQ imbalance (gain and phase mismatch)
@@ -162,8 +163,7 @@ void lib80211_add_dc_offset(float *re, float *im, size_t n,
  * @param gain_db     I/Q gain imbalance in dB (positive = I channel excess)
  * @param phase_deg   Phase imbalance in degrees
  */
-void lib80211_add_iq_imbalance(float *re, float *im, size_t n,
-                               float gain_db, float phase_deg);
+void lib80211_add_iq_imbalance(float *re, float *im, size_t n, float gain_db, float phase_deg);
 
 /* ========================================================================
  * Phase noise (AR(1) filtered random walk)
@@ -185,9 +185,13 @@ void lib80211_add_iq_imbalance(float *re, float *im, size_t n,
  * @param corner_hz   AR(1) corner frequency in Hz (controls correlation time)
  * @param rng         PRNG state (caller-owned)
  */
-void lib80211_add_phase_noise(float *re, float *im, size_t n,
-                              float strength, float sample_rate,
-                              float corner_hz, lib80211_rng *rng);
+void lib80211_add_phase_noise(float *re,
+                              float *im,
+                              size_t n,
+                              float strength,
+                              float sample_rate,
+                              float corner_hz,
+                              lib80211_rng *rng);
 
 /* ========================================================================
  * AGC settling ramp
@@ -206,8 +210,8 @@ void lib80211_add_phase_noise(float *re, float *im, size_t n,
  * @param settle_samples  Number of samples for AGC to settle (e.g., 128-300)
  * @param initial_gain_db Initial gain deficit in dB (negative = attenuated start)
  */
-void lib80211_add_agc_ramp(float *re, float *im, size_t n,
-                           int settle_samples, float initial_gain_db);
+void lib80211_add_agc_ramp(
+    float *re, float *im, size_t n, int settle_samples, float initial_gain_db);
 
 /* ========================================================================
  * ADC quantization

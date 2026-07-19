@@ -28,7 +28,8 @@ static void test_sync_clean_waveform(lib80211_fft_plan *plan) {
     test_vector *vec = vector_load("legacy_6mbps_waveform");
     if (!vec || !vec->real || !vec->imag || vec->n_complex == 0) {
         TEST_FAIL("cannot load legacy_6mbps_waveform");
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -64,7 +65,9 @@ static void test_sync_clean_waveform(lib80211_fft_plan *plan) {
 
     if (ok) {
         printf("    frame_start=%zu, ltf_start=%zu, cfo_rad=%.6f\n",
-               result.frame_start, result.ltf_start, result.cfo_rad);
+               result.frame_start,
+               result.ltf_start,
+               result.cfo_rad);
         TEST_PASS();
     } else {
         TEST_FAIL("sync results out of tolerance");
@@ -82,44 +85,50 @@ static void test_sync_ltf_timing(lib80211_fft_plan *plan) {
 
     /* Generate STF + LTF = 320 samples, prepend 100 samples of zeros */
     size_t prefix = 100;
-    size_t total = prefix + LIB80211_STF_SAMPLES + LIB80211_LTF_SAMPLES + 200;
-    float *re = (float *)calloc(total, sizeof(float));
-    float *im = (float *)calloc(total, sizeof(float));
+    size_t total  = prefix + LIB80211_STF_SAMPLES + LIB80211_LTF_SAMPLES + 200;
+    float *re     = (float *)calloc(total, sizeof(float));
+    float *im     = (float *)calloc(total, sizeof(float));
     if (!re || !im) {
         TEST_FAIL("malloc failed");
-        free(re); free(im);
+        free(re);
+        free(im);
         return;
     }
 
     lib80211_generate_stf(plan, re + prefix, im + prefix);
-    lib80211_generate_ltf(plan, re + prefix + LIB80211_STF_SAMPLES,
-                          im + prefix + LIB80211_STF_SAMPLES);
+    lib80211_generate_ltf(
+        plan, re + prefix + LIB80211_STF_SAMPLES, im + prefix + LIB80211_STF_SAMPLES);
 
     lib80211_sync_result result;
     int rc = lib80211_sync_detect(plan, re, im, total, &result);
 
     if (rc != 0) {
         TEST_FAIL("sync_detect returned -1");
-        free(re); free(im);
+        free(re);
+        free(im);
         return;
     }
 
-    int ok = 1;
+    int ok        = 1;
 
     /* frame_start should be at prefix (100) */
     int frame_err = abs((int)result.frame_start - (int)prefix);
     if (frame_err > 16) {
         printf("    frame_start=%zu (expected %zu, error=%d)\n",
-               result.frame_start, prefix, frame_err);
+               result.frame_start,
+               prefix,
+               frame_err);
         ok = 0;
     }
 
     /* ltf_start should be at prefix + 160 + 32 = 292 */
     size_t expected_ltf = prefix + LIB80211_STF_SAMPLES + 32;
-    int ltf_err = abs((int)result.ltf_start - (int)expected_ltf);
+    int ltf_err         = abs((int)result.ltf_start - (int)expected_ltf);
     if (ltf_err > 2) {
         printf("    ltf_start=%zu (expected %zu, error=%d)\n",
-               result.ltf_start, expected_ltf, ltf_err);
+               result.ltf_start,
+               expected_ltf,
+               ltf_err);
         ok = 0;
     }
 
@@ -131,7 +140,9 @@ static void test_sync_ltf_timing(lib80211_fft_plan *plan) {
 
     if (ok) {
         printf("    frame_start=%zu, ltf_start=%zu, cfo_rad=%.6f\n",
-               result.frame_start, result.ltf_start, result.cfo_rad);
+               result.frame_start,
+               result.ltf_start,
+               result.cfo_rad);
         TEST_PASS();
     } else {
         TEST_FAIL("timing results out of tolerance");
@@ -150,30 +161,30 @@ static void test_sync_cfo_estimation(lib80211_fft_plan *plan) {
 
     /* Generate STF + LTF, apply known CFO */
     size_t total = LIB80211_STF_SAMPLES + LIB80211_LTF_SAMPLES + 200;
-    float *re = (float *)calloc(total, sizeof(float));
-    float *im = (float *)calloc(total, sizeof(float));
+    float *re    = (float *)calloc(total, sizeof(float));
+    float *im    = (float *)calloc(total, sizeof(float));
     if (!re || !im) {
         TEST_FAIL("malloc failed");
-        free(re); free(im);
+        free(re);
+        free(im);
         return;
     }
 
     lib80211_generate_stf(plan, re, im);
-    lib80211_generate_ltf(plan, re + LIB80211_STF_SAMPLES,
-                          im + LIB80211_STF_SAMPLES);
+    lib80211_generate_ltf(plan, re + LIB80211_STF_SAMPLES, im + LIB80211_STF_SAMPLES);
 
     /* Apply CFO: 5000 Hz at 20 MSPS = 5000 / 20e6 * 2*pi rad/sample */
-    float cfo_hz = 5000.0f;
+    float cfo_hz      = 5000.0f;
     float cfo_applied = cfo_hz / (float)LIB80211_SAMPLE_RATE * 2.0f * (float)M_PI;
 
     for (size_t n = 0; n < total; n++) {
         float phase = (float)n * cfo_applied;
-        float c = cosf(phase);
-        float s = sinf(phase);
-        float r = re[n];
-        float i = im[n];
-        re[n] = r * c - i * s;
-        im[n] = r * s + i * c;
+        float c     = cosf(phase);
+        float s     = sinf(phase);
+        float r     = re[n];
+        float i     = im[n];
+        re[n]       = r * c - i * s;
+        im[n]       = r * s + i * c;
     }
 
     lib80211_sync_result result;
@@ -181,16 +192,19 @@ static void test_sync_cfo_estimation(lib80211_fft_plan *plan) {
 
     if (rc != 0) {
         TEST_FAIL("sync_detect returned -1");
-        free(re); free(im);
+        free(re);
+        free(im);
         return;
     }
 
     /* Check estimated CFO matches applied CFO within 10% */
-    float cfo_error = fabsf(result.cfo_rad - cfo_applied);
+    float cfo_error      = fabsf(result.cfo_rad - cfo_applied);
     float relative_error = cfo_error / fabsf(cfo_applied);
 
     printf("    applied_cfo=%.6f rad/s, estimated_cfo=%.6f rad/s, rel_error=%.2f%%\n",
-           cfo_applied, result.cfo_rad, relative_error * 100.0f);
+           cfo_applied,
+           result.cfo_rad,
+           relative_error * 100.0f);
 
     if (relative_error < 0.10f) {
         TEST_PASS();
@@ -211,12 +225,13 @@ static void test_cfo_correction(lib80211_fft_plan *plan) {
     (void)plan;
 
     /* Create a pure tone, apply CFO, correct it, verify residual is small */
-    size_t n = 256;
+    size_t n  = 256;
     float *re = (float *)malloc(n * sizeof(float));
     float *im = (float *)malloc(n * sizeof(float));
     if (!re || !im) {
         TEST_FAIL("malloc failed");
-        free(re); free(im);
+        free(re);
+        free(im);
         return;
     }
 
@@ -227,15 +242,15 @@ static void test_cfo_correction(lib80211_fft_plan *plan) {
     }
 
     /* Apply CFO offset */
-    float cfo = 0.05f;  /* rad/sample */
+    float cfo = 0.05f; /* rad/sample */
     for (size_t k = 0; k < n; k++) {
         float phase = (float)k * cfo;
-        float c = cosf(phase);
-        float s = sinf(phase);
-        float r = re[k];
-        float i = im[k];
-        re[k] = r * c - i * s;
-        im[k] = r * s + i * c;
+        float c     = cosf(phase);
+        float s     = sinf(phase);
+        float r     = re[k];
+        float i     = im[k];
+        re[k]       = r * c - i * s;
+        im[k]       = r * s + i * c;
     }
 
     /* Correct */
@@ -246,8 +261,9 @@ static void test_cfo_correction(lib80211_fft_plan *plan) {
     for (size_t k = 0; k < n; k++) {
         float err_r = fabsf(re[k] - 1.0f);
         float err_i = fabsf(im[k]);
-        float err = (err_r > err_i) ? err_r : err_i;
-        if (err > max_err) max_err = err;
+        float err   = (err_r > err_i) ? err_r : err_i;
+        if (err > max_err)
+            max_err = err;
     }
 
     if (max_err < 1e-5f) {

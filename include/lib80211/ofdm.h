@@ -17,9 +17,11 @@
  * @param out_imag      Output: 80 time-domain samples (CP + 64)
  */
 void lib80211_make_ofdm_symbol(lib80211_fft_plan *plan,
-                               const float *data_real, const float *data_imag,
+                               const float *data_real,
+                               const float *data_imag,
                                int symbol_index,
-                               float *out_real, float *out_imag);
+                               float *out_real,
+                               float *out_imag);
 
 /**
  * Construct one HT OFDM symbol: map 52 data values to subcarriers,
@@ -34,35 +36,34 @@ void lib80211_make_ofdm_symbol(lib80211_fft_plan *plan,
  * @param out_imag      Output: (cp_len + 64) time-domain samples
  */
 void lib80211_make_ht_ofdm_symbol(lib80211_fft_plan *plan,
-                                  const float *data_real, const float *data_imag,
-                                  int symbol_index, int cp_len,
-                                  float *out_real, float *out_imag);
+                                  const float *data_real,
+                                  const float *data_imag,
+                                  int symbol_index,
+                                  int cp_len,
+                                  float *out_real,
+                                  float *out_imag);
 
 /**
  * Generate STF (Short Training Field): 160 time-domain samples.
  */
-void lib80211_generate_stf(lib80211_fft_plan *plan,
-                           float *out_real, float *out_imag);
+void lib80211_generate_stf(lib80211_fft_plan *plan, float *out_real, float *out_imag);
 
 /**
  * Generate LTF (Long Training Field): 160 time-domain samples.
  * Structure: GI2 (32 samples) + T1 (64 samples) + T2 (64 samples).
  */
-void lib80211_generate_ltf(lib80211_fft_plan *plan,
-                           float *out_real, float *out_imag);
+void lib80211_generate_ltf(lib80211_fft_plan *plan, float *out_real, float *out_imag);
 
 /**
  * Generate HT-STF: 80 time-domain samples (CP16 + 64).
  * IEEE 802.11-2020 Section 19.3.9.4.5.
  */
-void lib80211_generate_ht_stf(lib80211_fft_plan *plan,
-                              float *out_real, float *out_imag);
+void lib80211_generate_ht_stf(lib80211_fft_plan *plan, float *out_real, float *out_imag);
 
 /**
  * Generate HT-LTF: 80 time-domain samples (CP16 + 64).
  * For 1 spatial stream. Uses extended subcarriers ±28.
  */
-void lib80211_generate_ht_ltf(lib80211_fft_plan *plan,
-                              float *out_real, float *out_imag);
+void lib80211_generate_ht_ltf(lib80211_fft_plan *plan, float *out_real, float *out_imag);
 
 #endif /* LIB80211_OFDM_H */

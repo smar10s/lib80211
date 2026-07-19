@@ -23,24 +23,28 @@ typedef struct {
 
 extern test_state g_test_state;
 
-#define TEST_BEGIN(name) do { \
-    g_test_state.current_test = (name); \
-    printf("  [ RUN  ] %s\n", (name)); \
-} while(0)
+#define TEST_BEGIN(name)                                                                           \
+    do {                                                                                           \
+        g_test_state.current_test = (name);                                                        \
+        printf("  [ RUN  ] %s\n", (name));                                                         \
+    } while (0)
 
-#define TEST_PASS() do { \
-    g_test_state.passed++; \
-    printf("  [ PASS ] %s\n", g_test_state.current_test); \
-} while(0)
+#define TEST_PASS()                                                                                \
+    do {                                                                                           \
+        g_test_state.passed++;                                                                     \
+        printf("  [ PASS ] %s\n", g_test_state.current_test);                                      \
+    } while (0)
 
-#define TEST_FAIL(fmt, ...) do { \
-    g_test_state.failed++; \
-    printf("  [ FAIL ] %s: " fmt "\n", g_test_state.current_test, ##__VA_ARGS__); \
-} while(0)
+#define TEST_FAIL(fmt, ...)                                                                        \
+    do {                                                                                           \
+        g_test_state.failed++;                                                                     \
+        printf("  [ FAIL ] %s: " fmt "\n", g_test_state.current_test, ##__VA_ARGS__);              \
+    } while (0)
 
-#define TEST_SUMMARY() do { \
-    printf("\n  %d passed, %d failed\n", g_test_state.passed, g_test_state.failed); \
-} while(0)
+#define TEST_SUMMARY()                                                                             \
+    do {                                                                                           \
+        printf("\n  %d passed, %d failed\n", g_test_state.passed, g_test_state.failed);            \
+    } while (0)
 
 #define TEST_EXIT() (g_test_state.failed > 0 ? 1 : 0)
 
@@ -86,22 +90,28 @@ void vector_free(test_vector *vec);
  * Compare two bit arrays (uint8_t per bit). Returns true if equal.
  * Prints first mismatch on failure.
  */
-bool assert_bits_equal(const uint8_t *expected, const uint8_t *actual,
-                       size_t n_bits, const char *label);
+bool assert_bits_equal(const uint8_t *expected,
+                       const uint8_t *actual,
+                       size_t n_bits,
+                       const char *label);
 
 /**
  * Compare two complex float arrays with tolerance.
  * Returns true if all samples within tolerance. Prints worst mismatch on failure.
  */
-bool assert_complex_close(const float *exp_real, const float *exp_imag,
-                          const float *act_real, const float *act_imag,
-                          size_t n, float tol, const char *label);
+bool assert_complex_close(const float *exp_real,
+                          const float *exp_imag,
+                          const float *act_real,
+                          const float *act_imag,
+                          size_t n,
+                          float tol,
+                          const char *label);
 
 /**
  * Compare two float arrays with tolerance.
  * Returns true if all values within tolerance.
  */
-bool assert_float_close(const float *expected, const float *actual,
-                        size_t n, float tol, const char *label);
+bool assert_float_close(
+    const float *expected, const float *actual, size_t n, float tol, const char *label);
 
 #endif /* TEST_UTIL_H */

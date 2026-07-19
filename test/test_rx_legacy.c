@@ -14,14 +14,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static const int RATES[] = { 6, 9, 12, 18, 24, 36, 48, 54 };
+static const int RATES[] = {6, 9, 12, 18, 24, 36, 48, 54};
 static const int N_RATES = 8;
 
 /* Expected PSDU length: 100 bytes (96 payload + 4 FCS) */
 #define EXPECTED_LENGTH 100
 
-static void test_decode_rate(lib80211_fft_plan *plan, int rate_mbps)
-{
+static void test_decode_rate(lib80211_fft_plan *plan, int rate_mbps) {
     char test_name[64];
     snprintf(test_name, sizeof(test_name), "rx_legacy_%dmbps", rate_mbps);
     TEST_BEGIN(test_name);
@@ -32,7 +31,8 @@ static void test_decode_rate(lib80211_fft_plan *plan, int rate_mbps)
     test_vector *vec = vector_load(vec_name);
     if (!vec || !vec->real || !vec->imag || vec->n_complex == 0) {
         TEST_FAIL("cannot load %s", vec_name);
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -72,7 +72,9 @@ static void test_decode_rate(lib80211_fft_plan *plan, int rate_mbps)
 
     if (ok) {
         printf("    rate=%d, len=%zu, n_sym=%d, fcs=OK\n",
-               result.rate_mbps, result.psdu_len, result.n_symbols);
+               result.rate_mbps,
+               result.psdu_len,
+               result.n_symbols);
         TEST_PASS();
     } else {
         TEST_FAIL("decode results incorrect");
@@ -81,8 +83,7 @@ static void test_decode_rate(lib80211_fft_plan *plan, int rate_mbps)
     vector_free(vec);
 }
 
-int main(void)
-{
+int main(void) {
     printf("test_rx_legacy: Full legacy frame decode (8 rates)\n");
 
     lib80211_fft_plan *plan = lib80211_fft_plan_create();

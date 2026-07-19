@@ -47,8 +47,8 @@ static uint32_t xorshift32(uint32_t *state) {
  *
  * Syndrome bit s = sum over j of H[row][j*Z + ...] * cw[j*Z + ...]
  */
-static int check_syndrome(const uint8_t *codeword, int cw_len,
-                          const uint8_t (*hsub)[24], int m, int z) {
+static int
+check_syndrome(const uint8_t *codeword, int cw_len, const uint8_t (*hsub)[24], int m, int z) {
     int n_check_rows = m * z;
 
     for (int bi = 0; bi < m; bi++) {
@@ -57,16 +57,17 @@ static int check_syndrome(const uint8_t *codeword, int cw_len,
             uint8_t s = 0;
             for (int bj = 0; bj < 24; bj++) {
                 uint8_t val = hsub[bi][bj];
-                if (val == 0) continue;  /* zero block */
+                if (val == 0)
+                    continue; /* zero block */
                 int shift = val % z;
-                int col = bj * z + (r + shift) % z;
+                int col   = bj * z + (r + shift) % z;
                 if (col < cw_len) {
                     s ^= codeword[col];
                 }
             }
             if (s != 0) {
-                printf("    syndrome fail at check row %d (block_row=%d, r=%d)\n",
-                       bi * z + r, bi, r);
+                printf(
+                    "    syndrome fail at check row %d (block_row=%d, r=%d)\n", bi * z + r, bi, r);
                 return -1;
             }
         }
@@ -80,8 +81,7 @@ static int check_syndrome(const uint8_t *codeword, int cw_len,
  */
 static const ldpc_hsub_entry *find_hsub(int cw_len, int rate_n, int rate_d) {
     for (int i = 0; i < LDPC_HSUB_TABLE_LEN; i++) {
-        if (LDPC_HSUB_TABLE[i].cw_len == cw_len &&
-            LDPC_HSUB_TABLE[i].rate_n == rate_n &&
+        if (LDPC_HSUB_TABLE[i].cw_len == cw_len && LDPC_HSUB_TABLE[i].rate_n == rate_n &&
             LDPC_HSUB_TABLE[i].rate_d == rate_d) {
             return &LDPC_HSUB_TABLE[i];
         }
@@ -97,11 +97,11 @@ static void test_ldpc_code(int cw_len, int rate_n, int rate_d) {
     snprintf(name, sizeof(name), "ldpc_encode_%d_r%d/%d", cw_len, rate_n, rate_d);
     TEST_BEGIN(name);
 
-    int K = cw_len * rate_n / rate_d;
+    int K              = cw_len * rate_n / rate_d;
 
     /* Generate deterministic info bits */
     uint8_t *info_bits = malloc((size_t)K);
-    uint8_t *codeword = malloc((size_t)cw_len);
+    uint8_t *codeword  = malloc((size_t)cw_len);
     if (!info_bits || !codeword) {
         TEST_FAIL("malloc failed");
         free(info_bits);
@@ -185,16 +185,17 @@ static void test_ldpc_edge_cases(void) {
     TEST_BEGIN("ldpc_edge_zeros");
 
     /* All-zeros should produce all-zeros codeword (P_GEN * 0 = 0) */
-    int cw_len = 648;
-    int K = 324;
+    int cw_len    = 648;
+    int K         = 324;
     uint8_t *info = calloc((size_t)K, 1);
-    uint8_t *cw = malloc((size_t)cw_len);
+    uint8_t *cw   = malloc((size_t)cw_len);
 
     lib80211_ldpc_encode(info, cw, cw_len, 1, 2);
 
     int nonzero = 0;
     for (int i = 0; i < cw_len; i++) {
-        if (cw[i] != 0) nonzero++;
+        if (cw[i] != 0)
+            nonzero++;
     }
     if (nonzero != 0) {
         TEST_FAIL("all-zeros info should give all-zeros codeword, got %d nonzero", nonzero);
@@ -209,9 +210,9 @@ static void test_ldpc_edge_cases(void) {
     TEST_BEGIN("ldpc_edge_ones");
 
     cw_len = 1944;
-    K = 1944 * 3 / 4;  /* rate 3/4 */
-    info = malloc((size_t)K);
-    cw = malloc((size_t)cw_len);
+    K      = 1944 * 3 / 4; /* rate 3/4 */
+    info   = malloc((size_t)K);
+    cw     = malloc((size_t)cw_len);
     memset(info, 1, (size_t)K);
 
     lib80211_ldpc_encode(info, cw, cw_len, 3, 4);
@@ -240,22 +241,23 @@ static void test_ldpc_ht_tx(void) {
 
     /* 50-byte PSDU with LDPC coding */
     uint8_t psdu[50];
-    for (int i = 0; i < 50; i++) psdu[i] = (uint8_t)(i & 0xFF);
+    for (int i = 0; i < 50; i++)
+        psdu[i] = (uint8_t)(i & 0xFF);
 
     lib80211_tx_ht_params params = {
-        .mcs = 0,
-        .psdu = psdu,
-        .psdu_len = 50,
+        .mcs            = 0,
+        .psdu           = psdu,
+        .psdu_len       = 50,
         .scrambler_seed = 0x5D,
-        .short_gi = false,
-        .ldpc = true,
+        .short_gi       = false,
+        .ldpc           = true,
     };
 
     size_t max_samples = lib80211_tx_ht_samples(&params);
-    float *out_real = calloc(max_samples, sizeof(float));
-    float *out_imag = calloc(max_samples, sizeof(float));
+    float *out_real    = calloc(max_samples, sizeof(float));
+    float *out_imag    = calloc(max_samples, sizeof(float));
 
-    size_t n = lib80211_tx_ht(plan, &params, out_real, out_imag);
+    size_t n           = lib80211_tx_ht(plan, &params, out_real, out_imag);
 
     if (n == 0) {
         TEST_FAIL("lib80211_tx_ht returned 0");
@@ -266,7 +268,8 @@ static void test_ldpc_ht_tx(void) {
         float max_mag = 0.0f;
         for (size_t i = 0; i < n; i++) {
             float mag = out_real[i] * out_real[i] + out_imag[i] * out_imag[i];
-            if (mag > max_mag) max_mag = mag;
+            if (mag > max_mag)
+                max_mag = mag;
         }
         if (max_mag < 1.0f) {
             TEST_FAIL("output looks empty (max magnitude %.4f)", max_mag);
@@ -290,22 +293,23 @@ static void test_ldpc_vht_tx(void) {
 
     /* 100-byte PSDU with LDPC coding, MCS 4 (16-QAM r=3/4) */
     uint8_t psdu[100];
-    for (int i = 0; i < 100; i++) psdu[i] = (uint8_t)((i * 7 + 3) & 0xFF);
+    for (int i = 0; i < 100; i++)
+        psdu[i] = (uint8_t)((i * 7 + 3) & 0xFF);
 
     lib80211_tx_vht_params params = {
-        .mcs = 4,
-        .psdu = psdu,
-        .psdu_len = 100,
+        .mcs            = 4,
+        .psdu           = psdu,
+        .psdu_len       = 100,
         .scrambler_seed = 0x5D,
-        .short_gi = false,
-        .ldpc = true,
+        .short_gi       = false,
+        .ldpc           = true,
     };
 
     size_t max_samples = lib80211_tx_vht_samples(&params);
-    float *out_real = calloc(max_samples, sizeof(float));
-    float *out_imag = calloc(max_samples, sizeof(float));
+    float *out_real    = calloc(max_samples, sizeof(float));
+    float *out_imag    = calloc(max_samples, sizeof(float));
 
-    size_t n = lib80211_tx_vht(plan, &params, out_real, out_imag);
+    size_t n           = lib80211_tx_vht(plan, &params, out_real, out_imag);
 
     if (n == 0) {
         TEST_FAIL("lib80211_tx_vht returned 0");
@@ -316,7 +320,8 @@ static void test_ldpc_vht_tx(void) {
         float max_mag = 0.0f;
         for (size_t i = 0; i < n; i++) {
             float mag = out_real[i] * out_real[i] + out_imag[i] * out_imag[i];
-            if (mag > max_mag) max_mag = mag;
+            if (mag > max_mag)
+                max_mag = mag;
         }
         if (max_mag < 1.0f) {
             TEST_FAIL("output looks empty (max magnitude %.4f)", max_mag);
@@ -346,29 +351,31 @@ static float box_muller(uint32_t *state) {
  * Test LDPC decoder with clean (noiseless) LLR input for all 12 codes.
  */
 static void test_ldpc_decode_clean(void) {
-    int rates[][2] = { {1,2}, {2,3}, {3,4}, {5,6} };
-    int cw_lens[] = { 648, 1296, 1944 };
+    int rates[][2] = {{1, 2}, {2, 3}, {3, 4}, {5, 6}};
+    int cw_lens[]  = {648, 1296, 1944};
 
     for (int r = 0; r < 4; r++) {
         for (int c = 0; c < 3; c++) {
             int cw_len = cw_lens[c];
             int rate_n = rates[r][0];
             int rate_d = rates[r][1];
-            int K = cw_len * rate_n / rate_d;
+            int K      = cw_len * rate_n / rate_d;
 
             char name[64];
-            snprintf(name, sizeof(name), "ldpc_decode_clean_%d_r%d/%d",
-                     cw_len, rate_n, rate_d);
+            snprintf(name, sizeof(name), "ldpc_decode_clean_%d_r%d/%d", cw_len, rate_n, rate_d);
             TEST_BEGIN(name);
 
             uint8_t *info_bits = malloc((size_t)K);
-            uint8_t *codeword = malloc((size_t)cw_len);
-            float *llr = malloc((size_t)cw_len * sizeof(float));
-            uint8_t *decoded = malloc((size_t)cw_len);
+            uint8_t *codeword  = malloc((size_t)cw_len);
+            float *llr         = malloc((size_t)cw_len * sizeof(float));
+            uint8_t *decoded   = malloc((size_t)cw_len);
 
             if (!info_bits || !codeword || !llr || !decoded) {
                 TEST_FAIL("malloc failed");
-                free(info_bits); free(codeword); free(llr); free(decoded);
+                free(info_bits);
+                free(codeword);
+                free(llr);
+                free(decoded);
                 continue;
             }
 
@@ -381,7 +388,10 @@ static void test_ldpc_decode_clean(void) {
             int rc = lib80211_ldpc_encode(info_bits, codeword, cw_len, rate_n, rate_d);
             if (rc != 0) {
                 TEST_FAIL("encode returned %d", rc);
-                free(info_bits); free(codeword); free(llr); free(decoded);
+                free(info_bits);
+                free(codeword);
+                free(llr);
+                free(decoded);
                 continue;
             }
 
@@ -393,14 +403,18 @@ static void test_ldpc_decode_clean(void) {
             int iters = lib80211_ldpc_decode(llr, decoded, cw_len, rate_n, rate_d, 30);
             if (iters <= 0) {
                 TEST_FAIL("decoder did not converge (returned %d)", iters);
-                free(info_bits); free(codeword); free(llr); free(decoded);
+                free(info_bits);
+                free(codeword);
+                free(llr);
+                free(decoded);
                 continue;
             }
 
             /* Check first K decoded bits match original info bits */
             int mismatches = 0;
             for (int i = 0; i < K; i++) {
-                if (decoded[i] != info_bits[i]) mismatches++;
+                if (decoded[i] != info_bits[i])
+                    mismatches++;
             }
             if (mismatches != 0) {
                 TEST_FAIL("%d bit mismatches in first K=%d bits", mismatches, K);
@@ -425,41 +439,48 @@ static void test_ldpc_decode_noisy(void) {
         int rate_n, rate_d;
         float eb_n0_db;
     } codes[] = {
-        { 1, 2, 2.0f },
-        { 2, 3, 3.5f },
-        { 3, 4, 4.5f },
-        { 5, 6, 5.5f },
+        {1, 2, 2.0f},
+        {2, 3, 3.5f},
+        {3, 4, 4.5f},
+        {5, 6, 5.5f},
     };
-    int cw_len = 1944;
+    int cw_len   = 1944;
     int n_trials = 5;
     int min_pass = 4;
 
     for (int ci = 0; ci < 4; ci++) {
-        int rate_n = codes[ci].rate_n;
-        int rate_d = codes[ci].rate_d;
-        float eb_n0_db = codes[ci].eb_n0_db;
-        int K = cw_len * rate_n / rate_d;
+        int rate_n      = codes[ci].rate_n;
+        int rate_d      = codes[ci].rate_d;
+        float eb_n0_db  = codes[ci].eb_n0_db;
+        int K           = cw_len * rate_n / rate_d;
         float code_rate = (float)rate_n / (float)rate_d;
 
         /* Eb/N0 -> noise sigma */
         float eb_n0_lin = powf(10.0f, eb_n0_db / 10.0f);
-        float sigma = sqrtf(1.0f / (2.0f * code_rate * eb_n0_lin));
+        float sigma     = sqrtf(1.0f / (2.0f * code_rate * eb_n0_lin));
 
         char name[64];
-        snprintf(name, sizeof(name), "ldpc_decode_noisy_1944_r%d/%d_%.1fdB",
-                 rate_n, rate_d, (double)eb_n0_db);
+        snprintf(name,
+                 sizeof(name),
+                 "ldpc_decode_noisy_1944_r%d/%d_%.1fdB",
+                 rate_n,
+                 rate_d,
+                 (double)eb_n0_db);
         TEST_BEGIN(name);
 
         int successes = 0;
 
         for (int trial = 0; trial < n_trials; trial++) {
             uint8_t *info_bits = malloc((size_t)K);
-            uint8_t *codeword = malloc((size_t)cw_len);
-            float *llr = malloc((size_t)cw_len * sizeof(float));
-            uint8_t *decoded = malloc((size_t)cw_len);
+            uint8_t *codeword  = malloc((size_t)cw_len);
+            float *llr         = malloc((size_t)cw_len * sizeof(float));
+            uint8_t *decoded   = malloc((size_t)cw_len);
 
             if (!info_bits || !codeword || !llr || !decoded) {
-                free(info_bits); free(codeword); free(llr); free(decoded);
+                free(info_bits);
+                free(codeword);
+                free(llr);
+                free(decoded);
                 continue;
             }
 
@@ -473,12 +494,12 @@ static void test_ldpc_decode_noisy(void) {
 
             /* BPSK modulate + AWGN noise -> LLR */
             uint32_t noise_seed = (uint32_t)(trial * 7919 + rate_n * 31 + 123);
-            float sigma2 = sigma * sigma;
+            float sigma2        = sigma * sigma;
             for (int i = 0; i < cw_len; i++) {
-                float x = codeword[i] ? -1.0f : 1.0f;  /* BPSK: 0->+1, 1->-1 */
+                float x = codeword[i] ? -1.0f : 1.0f; /* BPSK: 0->+1, 1->-1 */
                 float n = box_muller(&noise_seed) * sigma;
                 float y = x + n;
-                llr[i] = 2.0f * y / sigma2;
+                llr[i]  = 2.0f * y / sigma2;
             }
 
             /* Decode */
@@ -488,9 +509,13 @@ static void test_ldpc_decode_noisy(void) {
             if (iters > 0) {
                 int ok = 1;
                 for (int i = 0; i < K; i++) {
-                    if (decoded[i] != info_bits[i]) { ok = 0; break; }
+                    if (decoded[i] != info_bits[i]) {
+                        ok = 0;
+                        break;
+                    }
                 }
-                if (ok) successes++;
+                if (ok)
+                    successes++;
             }
 
             free(info_bits);
@@ -515,17 +540,20 @@ static void test_ldpc_decode_early_termination(void) {
 
     int cw_len = 648;
     int rate_n = 1, rate_d = 2;
-    int K = cw_len * rate_n / rate_d;
+    int K              = cw_len * rate_n / rate_d;
 
     /* All-zeros info -> all-zeros codeword */
     uint8_t *info_bits = calloc((size_t)K, 1);
-    uint8_t *codeword = malloc((size_t)cw_len);
-    float *llr = malloc((size_t)cw_len * sizeof(float));
-    uint8_t *decoded = malloc((size_t)cw_len);
+    uint8_t *codeword  = malloc((size_t)cw_len);
+    float *llr         = malloc((size_t)cw_len * sizeof(float));
+    uint8_t *decoded   = malloc((size_t)cw_len);
 
     if (!info_bits || !codeword || !llr || !decoded) {
         TEST_FAIL("malloc failed");
-        free(info_bits); free(codeword); free(llr); free(decoded);
+        free(info_bits);
+        free(codeword);
+        free(llr);
+        free(decoded);
         return;
     }
 
@@ -556,8 +584,8 @@ int main(void) {
     printf("test_ldpc\n");
 
     /* Test all 12 LDPC codes */
-    int rates[][2] = { {1,2}, {2,3}, {3,4}, {5,6} };
-    int cw_lens[] = { 648, 1296, 1944 };
+    int rates[][2] = {{1, 2}, {2, 3}, {3, 4}, {5, 6}};
+    int cw_lens[]  = {648, 1296, 1944};
 
     for (int r = 0; r < 4; r++) {
         for (int c = 0; c < 3; c++) {

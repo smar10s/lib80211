@@ -51,8 +51,10 @@ static void test_interleave_annex_i1(void) {
     }
 
 cleanup:
-    if (enc_vec) vector_free(enc_vec);
-    if (int_vec) vector_free(int_vec);
+    if (enc_vec)
+        vector_free(enc_vec);
+    if (int_vec)
+        vector_free(int_vec);
 }
 
 /**
@@ -80,25 +82,27 @@ static void test_ht_interleave_mcs(int mcs) {
         goto cleanup;
     }
     if (enc_vec->n_bits != int_vec->n_bits) {
-        TEST_FAIL("size mismatch: encoded=%zu, interleaved=%zu",
-                  enc_vec->n_bits, int_vec->n_bits);
+        TEST_FAIL("size mismatch: encoded=%zu, interleaved=%zu", enc_vec->n_bits, int_vec->n_bits);
         goto cleanup;
     }
 
     const lib80211_ht_mcs_info *info = &LIB80211_HT_MCS_TABLE[mcs];
-    int n_cbps = info->n_cbps;
-    int n_bpsc = info->n_bpsc;
-    int n_sym = (int)enc_vec->n_bits / n_cbps;
+    int n_cbps                       = info->n_cbps;
+    int n_bpsc                       = info->n_bpsc;
+    int n_sym                        = (int)enc_vec->n_bits / n_cbps;
 
     /* Interleave each symbol and compare */
-    uint8_t interleaved[416];  /* max n_cbps for HT (64QAM = 312) */
+    uint8_t interleaved[416]; /* max n_cbps for HT (64QAM = 312) */
     for (int s = 0; s < n_sym; s++) {
         lib80211_interleave_ht(&enc_vec->bits[s * n_cbps], interleaved, n_cbps, n_bpsc);
 
         for (int i = 0; i < n_cbps; i++) {
             if (interleaved[i] != int_vec->bits[s * n_cbps + i]) {
                 TEST_FAIL("mismatch at symbol %d, bit %d: expected %u, got %u",
-                          s, i, int_vec->bits[s * n_cbps + i], interleaved[i]);
+                          s,
+                          i,
+                          int_vec->bits[s * n_cbps + i],
+                          interleaved[i]);
                 goto cleanup;
             }
         }
@@ -107,8 +111,10 @@ static void test_ht_interleave_mcs(int mcs) {
     TEST_PASS();
 
 cleanup:
-    if (enc_vec) vector_free(enc_vec);
-    if (int_vec) vector_free(int_vec);
+    if (enc_vec)
+        vector_free(enc_vec);
+    if (int_vec)
+        vector_free(int_vec);
 }
 
 /**
@@ -148,8 +154,8 @@ static void test_deinterleave_annex_i1(void) {
     for (int i = 0; i < n_cbps; i++) {
         uint8_t hard = (soft_out[i] < 0.0f) ? 1 : 0;
         if (hard != enc_vec->bits[i]) {
-            TEST_FAIL("bit %d: expected %u, got %u (soft=%.2f)",
-                      i, enc_vec->bits[i], hard, soft_out[i]);
+            TEST_FAIL(
+                "bit %d: expected %u, got %u (soft=%.2f)", i, enc_vec->bits[i], hard, soft_out[i]);
             goto cleanup;
         }
     }
@@ -157,8 +163,10 @@ static void test_deinterleave_annex_i1(void) {
     TEST_PASS();
 
 cleanup:
-    if (enc_vec) vector_free(enc_vec);
-    if (int_vec) vector_free(int_vec);
+    if (enc_vec)
+        vector_free(enc_vec);
+    if (int_vec)
+        vector_free(int_vec);
 }
 
 /**
@@ -170,10 +178,10 @@ static void test_deinterleave_roundtrip(void) {
 
     /* Test each legacy rate's n_cbps/n_bpsc combination */
     static const int configs[][2] = {
-        {48, 1},   /* BPSK */
-        {96, 2},   /* QPSK */
-        {192, 4},  /* 16-QAM */
-        {288, 6},  /* 64-QAM */
+        {48, 1},  /* BPSK */
+        {96, 2},  /* QPSK */
+        {192, 4}, /* 16-QAM */
+        {288, 6}, /* 64-QAM */
     };
     int n_configs = 4;
 
@@ -206,7 +214,11 @@ static void test_deinterleave_roundtrip(void) {
             uint8_t hard = (soft_out[i] < 0.0f) ? 1 : 0;
             if (hard != original[i]) {
                 TEST_FAIL("n_cbps=%d, n_bpsc=%d, bit %d: expected %u, got %u",
-                          n_cbps, n_bpsc, i, original[i], hard);
+                          n_cbps,
+                          n_bpsc,
+                          i,
+                          original[i],
+                          hard);
                 return;
             }
         }
@@ -223,8 +235,8 @@ static void test_deinterleave_ht_roundtrip(void) {
 
     for (int mcs = 0; mcs < 8; mcs++) {
         const lib80211_ht_mcs_info *info = &LIB80211_HT_MCS_TABLE[mcs];
-        int n_cbps = info->n_cbps;
-        int n_bpsc = info->n_bpsc;
+        int n_cbps                       = info->n_cbps;
+        int n_bpsc                       = info->n_bpsc;
 
         /* Generate known pattern */
         uint8_t original[416];
@@ -250,8 +262,7 @@ static void test_deinterleave_ht_roundtrip(void) {
         for (int i = 0; i < n_cbps; i++) {
             uint8_t hard = (soft_out[i] < 0.0f) ? 1 : 0;
             if (hard != original[i]) {
-                TEST_FAIL("MCS %d, bit %d: expected %u, got %u",
-                          mcs, i, original[i], hard);
+                TEST_FAIL("MCS %d, bit %d: expected %u, got %u", mcs, i, original[i], hard);
                 return;
             }
         }

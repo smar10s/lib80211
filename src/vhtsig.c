@@ -18,9 +18,8 @@
 
 #include <string.h>
 
-void lib80211_make_vhtsiga_bits(int mcs, int length_bytes, bool short_gi,
-                                bool coding_ldpc, int ldpc_extra,
-                                uint8_t *out_bits) {
+void lib80211_make_vhtsiga_bits(
+    int mcs, int length_bytes, bool short_gi, bool coding_ldpc, int ldpc_extra, uint8_t *out_bits) {
     /* 34 data bits */
     uint8_t data_bits[34];
     memset(data_bits, 0, sizeof(data_bits));
@@ -43,7 +42,7 @@ void lib80211_make_vhtsiga_bits(int mcs, int length_bytes, bool short_gi,
     /* already zero */
 
     /* Partial AID: bits[13:21] = 0x15D (9 bits LSB first) */
-    int paid = 0x15D;
+    int paid     = 0x15D;
     for (int i = 0; i < 9; i++)
         data_bits[13 + i] = (uint8_t)((paid >> i) & 1);
 
@@ -80,7 +79,7 @@ void lib80211_make_vhtsiga_bits(int mcs, int length_bytes, bool short_gi,
     memcpy(out_bits, data_bits, 34);
 
     /* CRC-8: same polynomial as HT-SIG, ones-complement, MSB-first */
-    uint8_t crc = lib80211_htsig_crc8(data_bits, 34);
+    uint8_t crc     = lib80211_htsig_crc8(data_bits, 34);
     uint8_t crc_inv = (uint8_t)(~crc & 0xFF);
     for (int i = 0; i < 8; i++)
         out_bits[34 + i] = (uint8_t)((crc_inv >> (7 - i)) & 1);
@@ -88,17 +87,20 @@ void lib80211_make_vhtsiga_bits(int mcs, int length_bytes, bool short_gi,
     /* Tail: 6 zeros at bits [42:47] */
     memset(&out_bits[42], 0, 6);
 
-    (void)length_bytes;  /* length_bytes not used in VHT-SIG-A */
+    (void)length_bytes; /* length_bytes not used in VHT-SIG-A */
 }
 
 void lib80211_make_vhtsiga_symbols(lib80211_fft_plan *plan,
-                                   int mcs, int length_bytes, bool short_gi,
-                                   bool coding_ldpc, int ldpc_extra,
-                                   float *out_real, float *out_imag) {
+                                   int mcs,
+                                   int length_bytes,
+                                   bool short_gi,
+                                   bool coding_ldpc,
+                                   int ldpc_extra,
+                                   float *out_real,
+                                   float *out_imag) {
     /* Generate 48 VHT-SIG-A bits */
     uint8_t vhtsiga_bits[48];
-    lib80211_make_vhtsiga_bits(mcs, length_bytes, short_gi,
-                               coding_ldpc, ldpc_extra, vhtsiga_bits);
+    lib80211_make_vhtsiga_bits(mcs, length_bytes, short_gi, coding_ldpc, ldpc_extra, vhtsiga_bits);
 
     /* BCC encode: 48 bits -> 96 coded bits (rate-1/2) */
     uint8_t coded[96];
@@ -136,17 +138,17 @@ void lib80211_make_vhtsiga_symbols(lib80211_fft_plan *plan,
         float freq_imag[64] = {0};
 
         for (int i = 0; i < 48; i++) {
-            int bin = LIB80211_DATA_BINS[i];
+            int bin        = LIB80211_DATA_BINS[i];
             freq_real[bin] = final_real[i];
             freq_imag[bin] = final_imag[i];
         }
 
         /* Pilots: legacy polarity at symbol indices 1 and 2
          * (L-SIG is symbol 0, VHT-SIG-A1 is symbol 1, VHT-SIG-A2 is symbol 2) */
-        int pol_idx = (sym + 1) % 127;
+        int pol_idx    = (sym + 1) % 127;
         float polarity = (float)LIB80211_PILOT_POLARITY[pol_idx];
         for (int i = 0; i < 4; i++) {
-            int bin = LIB80211_PILOT_BINS[i];
+            int bin        = LIB80211_PILOT_BINS[i];
             freq_real[bin] = polarity * LIB80211_PILOT_BASE[i];
             freq_imag[bin] = 0.0f;
         }
@@ -183,7 +185,8 @@ void lib80211_make_vhtsigb_bits(int psdu_length, uint8_t *out_bits) {
 
 void lib80211_make_vhtsigb_symbol(lib80211_fft_plan *plan,
                                   int psdu_length,
-                                  float *out_real, float *out_imag) {
+                                  float *out_real,
+                                  float *out_imag) {
     /* Generate 26 VHT-SIG-B bits */
     uint8_t sigb_bits[26];
     lib80211_make_vhtsigb_bits(psdu_length, sigb_bits);
@@ -205,7 +208,7 @@ void lib80211_make_vhtsigb_symbol(lib80211_fft_plan *plan,
     float freq_imag[64] = {0};
 
     for (int i = 0; i < 52; i++) {
-        int bin = LIB80211_HT_DATA_BINS[i];
+        int bin        = LIB80211_HT_DATA_BINS[i];
         freq_real[bin] = mod_real[i];
         freq_imag[bin] = mod_imag[i];
     }
@@ -215,7 +218,7 @@ void lib80211_make_vhtsigb_symbol(lib80211_fft_plan *plan,
      * in the z=3 pilot polarity sequence). Ref: IEEE 802.11ac-2013 §22.3.10.10 */
     float polarity = (float)LIB80211_PILOT_POLARITY[3];
     for (int k = 0; k < 4; k++) {
-        int bin = LIB80211_HT_PILOT_BINS[k];
+        int bin        = LIB80211_HT_PILOT_BINS[k];
         freq_real[bin] = polarity * LIB80211_HT_PILOT_PATTERN[k];
         freq_imag[bin] = 0.0f;
     }

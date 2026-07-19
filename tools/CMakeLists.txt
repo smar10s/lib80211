@@ -69,6 +69,6 @@ endif()
 if(LIB80211_BUILD_TESTS)
     add_test(NAME test_rx_file_roundtrip
         COMMAND ${CMAKE_COMMAND} -E env bash -c
-        "$<TARGET_FILE:gen_test_cf32> /tmp/test_beacon_rx.cf32 && $<TARGET_FILE:rx_file> -q /tmp/test_beacon_rx.cf32 | grep -q '\"fcs_ok\": true'"
+        "TMPFILE=$(mktemp) && $<TARGET_FILE:gen_test_cf32> \"$TMPFILE\" && $<TARGET_FILE:rx_file> -q \"$TMPFILE\" | grep -q '\"fcs_ok\": true' && rm -f \"$TMPFILE\""
     )
 endif()

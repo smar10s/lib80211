@@ -21,8 +21,7 @@
 static const int PSDU_LEN = 100;
 
 /* CRC-32 for generating FCS */
-static uint32_t test_crc32(const uint8_t *data, size_t len)
-{
+static uint32_t test_crc32(const uint8_t *data, size_t len) {
     uint32_t crc = 0xFFFFFFFFu;
     for (size_t i = 0; i < len; i++) {
         crc ^= data[i];
@@ -36,13 +35,12 @@ static uint32_t test_crc32(const uint8_t *data, size_t len)
     return crc ^ 0xFFFFFFFFu;
 }
 
-static void fill_psdu(uint8_t *psdu, int seed)
-{
+static void fill_psdu(uint8_t *psdu, int seed) {
     /* Fill 96 payload bytes */
     for (int i = 0; i < PSDU_LEN - 4; i++)
         psdu[i] = (uint8_t)((i * 7 + seed) & 0xFF);
     /* Compute and append FCS */
-    uint32_t fcs = test_crc32(psdu, PSDU_LEN - 4);
+    uint32_t fcs       = test_crc32(psdu, PSDU_LEN - 4);
     psdu[PSDU_LEN - 4] = (uint8_t)(fcs & 0xFF);
     psdu[PSDU_LEN - 3] = (uint8_t)((fcs >> 8) & 0xFF);
     psdu[PSDU_LEN - 2] = (uint8_t)((fcs >> 16) & 0xFF);
@@ -52,49 +50,49 @@ static void fill_psdu(uint8_t *psdu, int seed)
 /**
  * TX->RX loopback test for given VHT MCS and GI.
  */
-static void test_loopback(lib80211_fft_plan *plan, int mcs, bool short_gi)
-{
+static void test_loopback(lib80211_fft_plan *plan, int mcs, bool short_gi) {
     char test_name[64];
-    snprintf(test_name, sizeof(test_name), "rx_vht_mcs%d%s",
-             mcs, short_gi ? "_sgi" : "");
+    snprintf(test_name, sizeof(test_name), "rx_vht_mcs%d%s", mcs, short_gi ? "_sgi" : "");
     TEST_BEGIN(test_name);
 
     uint8_t psdu[100];
-    fill_psdu(psdu, mcs + 20);  /* different seed than HT tests */
+    fill_psdu(psdu, mcs + 20); /* different seed than HT tests */
 
     lib80211_tx_vht_params tx_params = {
-        .mcs = mcs,
-        .psdu = psdu,
-        .psdu_len = PSDU_LEN,
+        .mcs            = mcs,
+        .psdu           = psdu,
+        .psdu_len       = PSDU_LEN,
         .scrambler_seed = 0x5D,
-        .short_gi = short_gi,
-        .ldpc = false,
+        .short_gi       = short_gi,
+        .ldpc           = false,
     };
 
     size_t max_samples = lib80211_tx_vht_samples(&tx_params);
     /* Add some padding for sync detection */
     size_t buf_samples = max_samples + 200;
-    float *tx_real = (float *)calloc(buf_samples, sizeof(float));
-    float *tx_imag = (float *)calloc(buf_samples, sizeof(float));
+    float *tx_real     = (float *)calloc(buf_samples, sizeof(float));
+    float *tx_imag     = (float *)calloc(buf_samples, sizeof(float));
 
     if (!tx_real || !tx_imag) {
         TEST_FAIL("allocation failed");
-        free(tx_real); free(tx_imag);
+        free(tx_real);
+        free(tx_imag);
         return;
     }
 
     /* Generate frame with some leading zeros for sync */
     size_t offset = 100;
-    size_t n_tx = lib80211_tx_vht(plan, &tx_params,
-                                   tx_real + offset, tx_imag + offset);
+    size_t n_tx   = lib80211_tx_vht(plan, &tx_params, tx_real + offset, tx_imag + offset);
     if (n_tx == 0) {
         TEST_FAIL("tx_vht returned 0");
-        free(tx_real); free(tx_imag);
+        free(tx_real);
+        free(tx_imag);
         return;
     }
 
     size_t total_samples = offset + n_tx + 100;
-    if (total_samples > buf_samples) total_samples = buf_samples;
+    if (total_samples > buf_samples)
+        total_samples = buf_samples;
 
     /* Decode */
     lib80211_rx_result result;
@@ -102,7 +100,8 @@ static void test_loopback(lib80211_fft_plan *plan, int mcs, bool short_gi)
 
     if (rc != 0) {
         TEST_FAIL("rx_decode returned -1 (decode failed)");
-        free(tx_real); free(tx_imag);
+        free(tx_real);
+        free(tx_imag);
         return;
     }
 
@@ -149,7 +148,9 @@ static void test_loopback(lib80211_fft_plan *plan, int mcs, bool short_gi)
             if (result.psdu[i] != psdu[i]) {
                 if (mismatches == 0)
                     printf("    first mismatch at byte %d: expected 0x%02x got 0x%02x\n",
-                           i, psdu[i], result.psdu[i]);
+                           i,
+                           psdu[i],
+                           result.psdu[i]);
                 mismatches++;
             }
         }
@@ -161,7 +162,10 @@ static void test_loopback(lib80211_fft_plan *plan, int mcs, bool short_gi)
 
     if (ok) {
         printf("    mcs=%d, sgi=%d, len=%zu, n_sym=%d, fcs=OK\n",
-               result.mcs, result.short_gi, result.psdu_len, result.n_symbols);
+               result.mcs,
+               result.short_gi,
+               result.psdu_len,
+               result.n_symbols);
         TEST_PASS();
     } else {
         TEST_FAIL("decode results incorrect");
@@ -174,23 +178,21 @@ static void test_loopback(lib80211_fft_plan *plan, int mcs, bool short_gi)
 /**
  * Decode a TGac golden waveform vector.
  */
-static void test_decode_vector(lib80211_fft_plan *plan, int mcs, bool short_gi)
-{
+static void test_decode_vector(lib80211_fft_plan *plan, int mcs, bool short_gi) {
     char test_name[64];
-    snprintf(test_name, sizeof(test_name), "rx_vht_vec_mcs%d%s",
-             mcs, short_gi ? "_sgi" : "");
+    snprintf(test_name, sizeof(test_name), "rx_vht_vec_mcs%d%s", mcs, short_gi ? "_sgi" : "");
     TEST_BEGIN(test_name);
 
     char vec_name[64];
-    snprintf(vec_name, sizeof(vec_name), "vht_mcs%d%s_waveform",
-             mcs, short_gi ? "_sgi" : "");
+    snprintf(vec_name, sizeof(vec_name), "vht_mcs%d%s_waveform", mcs, short_gi ? "_sgi" : "");
 
     test_vector *vec = vector_load(vec_name);
     if (!vec || !vec->real || !vec->imag || vec->n_complex == 0) {
         /* Vector not available — skip (not a failure) */
         printf("    vector %s not available, skipping\n", vec_name);
         TEST_PASS();
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -221,8 +223,8 @@ static void test_decode_vector(lib80211_fft_plan *plan, int mcs, bool short_gi)
     }
 
     if (ok) {
-        printf("    mcs=%d, sgi=%d, len=%zu, fcs=OK\n",
-               result.mcs, result.short_gi, result.psdu_len);
+        printf(
+            "    mcs=%d, sgi=%d, len=%zu, fcs=OK\n", result.mcs, result.short_gi, result.psdu_len);
         TEST_PASS();
     } else {
         TEST_FAIL("golden vector decode incorrect");
@@ -234,54 +236,55 @@ static void test_decode_vector(lib80211_fft_plan *plan, int mcs, bool short_gi)
 /**
  * TX->RX loopback test for LDPC-coded VHT frame.
  */
-static void test_loopback_ldpc(lib80211_fft_plan *plan, int mcs, bool short_gi)
-{
+static void test_loopback_ldpc(lib80211_fft_plan *plan, int mcs, bool short_gi) {
     char test_name[64];
-    snprintf(test_name, sizeof(test_name), "rx_vht_ldpc_mcs%d%s",
-             mcs, short_gi ? "_sgi" : "");
+    snprintf(test_name, sizeof(test_name), "rx_vht_ldpc_mcs%d%s", mcs, short_gi ? "_sgi" : "");
     TEST_BEGIN(test_name);
 
     uint8_t psdu[100];
     fill_psdu(psdu, mcs + 30);
 
     lib80211_tx_vht_params tx_params = {
-        .mcs = mcs,
-        .psdu = psdu,
-        .psdu_len = PSDU_LEN,
+        .mcs            = mcs,
+        .psdu           = psdu,
+        .psdu_len       = PSDU_LEN,
         .scrambler_seed = 0x5D,
-        .short_gi = short_gi,
-        .ldpc = true,
+        .short_gi       = short_gi,
+        .ldpc           = true,
     };
 
     size_t max_samples = lib80211_tx_vht_samples(&tx_params);
     size_t buf_samples = max_samples + 200;
-    float *tx_real = (float *)calloc(buf_samples, sizeof(float));
-    float *tx_imag = (float *)calloc(buf_samples, sizeof(float));
+    float *tx_real     = (float *)calloc(buf_samples, sizeof(float));
+    float *tx_imag     = (float *)calloc(buf_samples, sizeof(float));
 
     if (!tx_real || !tx_imag) {
         TEST_FAIL("allocation failed");
-        free(tx_real); free(tx_imag);
+        free(tx_real);
+        free(tx_imag);
         return;
     }
 
     size_t offset = 100;
-    size_t n_tx = lib80211_tx_vht(plan, &tx_params,
-                                   tx_real + offset, tx_imag + offset);
+    size_t n_tx   = lib80211_tx_vht(plan, &tx_params, tx_real + offset, tx_imag + offset);
     if (n_tx == 0) {
         TEST_FAIL("tx_vht returned 0");
-        free(tx_real); free(tx_imag);
+        free(tx_real);
+        free(tx_imag);
         return;
     }
 
     size_t total_samples = offset + n_tx + 100;
-    if (total_samples > buf_samples) total_samples = buf_samples;
+    if (total_samples > buf_samples)
+        total_samples = buf_samples;
 
     lib80211_rx_result result;
     int rc = lib80211_rx_decode(plan, tx_real, tx_imag, total_samples, &result);
 
     if (rc != 0) {
         TEST_FAIL("rx_decode returned -1 (decode failed)");
-        free(tx_real); free(tx_imag);
+        free(tx_real);
+        free(tx_imag);
         return;
     }
 
@@ -310,7 +313,10 @@ static void test_loopback_ldpc(lib80211_fft_plan *plan, int mcs, bool short_gi)
 
     if (ok) {
         printf("    mcs=%d, ldpc=1, sgi=%d, len=%zu, n_sym=%d, fcs=OK\n",
-               result.mcs, result.short_gi, result.psdu_len, result.n_symbols);
+               result.mcs,
+               result.short_gi,
+               result.psdu_len,
+               result.n_symbols);
         TEST_PASS();
     } else {
         TEST_FAIL("decode results incorrect");
@@ -320,8 +326,7 @@ static void test_loopback_ldpc(lib80211_fft_plan *plan, int mcs, bool short_gi)
     free(tx_imag);
 }
 
-int main(void)
-{
+int main(void) {
     printf("test_rx_vht: VHT frame decode (MCS 0-8, BCC)\n");
 
     lib80211_fft_plan *plan = lib80211_fft_plan_create();

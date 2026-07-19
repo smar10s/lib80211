@@ -13,7 +13,6 @@
  * @param n_bits    Number of bits to process
  * @param seed      7-bit scrambler seed (bits 6..0, bit 6 is MSB of LFSR)
  */
-void lib80211_scramble(const uint8_t *in_bits, uint8_t *out_bits,
-                       size_t n_bits, uint8_t seed);
+void lib80211_scramble(const uint8_t *in_bits, uint8_t *out_bits, size_t n_bits, uint8_t seed);
 
 #endif /* LIB80211_SCRAMBLER_H */

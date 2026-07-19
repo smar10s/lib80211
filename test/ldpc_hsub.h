@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 /* Expansion factors */
-static const int LDPC_Z[] = { 27, 54, 81 };  /* indexed by cw: 648->0, 1296->1, 1944->2 */
+static const int LDPC_Z[] = {27, 54, 81}; /* indexed by cw: 648->0, 1296->1, 1944->2 */
 
 /* H_SUB rate=1/2, cw_len=648: 12x24 */
 static const uint8_t HSUB_648_r12[12][24] = {
@@ -155,24 +155,24 @@ typedef struct {
     int cw_len;
     int rate_n;
     int rate_d;
-    int m;        /* number of check rows (in sub-matrix blocks) */
-    int z;        /* expansion factor */
+    int m; /* number of check rows (in sub-matrix blocks) */
+    int z; /* expansion factor */
     const uint8_t (*hsub)[24];
 } ldpc_hsub_entry;
 
 static const ldpc_hsub_entry LDPC_HSUB_TABLE[] = {
-    { 648, 1, 2, 12, 27, HSUB_648_r12 },
-    { 1296, 1, 2, 12, 54, HSUB_1296_r12 },
-    { 1944, 1, 2, 12, 81, HSUB_1944_r12 },
-    { 648, 2, 3, 8, 27, HSUB_648_r23 },
-    { 1296, 2, 3, 8, 54, HSUB_1296_r23 },
-    { 1944, 2, 3, 8, 81, HSUB_1944_r23 },
-    { 648, 3, 4, 6, 27, HSUB_648_r34 },
-    { 1296, 3, 4, 6, 54, HSUB_1296_r34 },
-    { 1944, 3, 4, 6, 81, HSUB_1944_r34 },
-    { 648, 5, 6, 4, 27, HSUB_648_r56 },
-    { 1296, 5, 6, 4, 54, HSUB_1296_r56 },
-    { 1944, 5, 6, 4, 81, HSUB_1944_r56 },
+    {648, 1, 2, 12, 27, HSUB_648_r12},
+    {1296, 1, 2, 12, 54, HSUB_1296_r12},
+    {1944, 1, 2, 12, 81, HSUB_1944_r12},
+    {648, 2, 3, 8, 27, HSUB_648_r23},
+    {1296, 2, 3, 8, 54, HSUB_1296_r23},
+    {1944, 2, 3, 8, 81, HSUB_1944_r23},
+    {648, 3, 4, 6, 27, HSUB_648_r34},
+    {1296, 3, 4, 6, 54, HSUB_1296_r34},
+    {1944, 3, 4, 6, 81, HSUB_1944_r34},
+    {648, 5, 6, 4, 27, HSUB_648_r56},
+    {1296, 5, 6, 4, 54, HSUB_1296_r56},
+    {1944, 5, 6, 4, 81, HSUB_1944_r56},
 };
 
 #define LDPC_HSUB_TABLE_LEN 12

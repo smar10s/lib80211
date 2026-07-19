@@ -9,8 +9,7 @@
 
 #include <stdint.h>
 
-static inline uint32_t lib80211_crc32_byte(uint32_t crc, uint8_t byte)
-{
+static inline uint32_t lib80211_crc32_byte(uint32_t crc, uint8_t byte) {
     crc ^= byte;
     for (int i = 0; i < 8; i++) {
         if (crc & 1)

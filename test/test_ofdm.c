@@ -27,7 +27,8 @@ static void test_signal_bits(void) {
     test_vector *vec = vector_load("annex_i1_signal_bits");
     if (!vec || !vec->bits || vec->n_bits != 24) {
         TEST_FAIL("cannot load signal_bits vector (expected 24 bits)");
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -51,7 +52,8 @@ static void test_signal_encoded(void) {
     test_vector *vec = vector_load("annex_i1_signal_encoded");
     if (!vec || !vec->bits || vec->n_bits != 48) {
         TEST_FAIL("cannot load signal_encoded vector");
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -76,7 +78,8 @@ static void test_signal_interleaved(void) {
     test_vector *vec = vector_load("annex_i1_signal_interleaved");
     if (!vec || !vec->bits || vec->n_bits != 48) {
         TEST_FAIL("cannot load signal_interleaved vector");
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -105,7 +108,8 @@ static void test_signal_freq(lib80211_fft_plan *plan) {
     test_vector *vec = vector_load("annex_i1_signal_freq");
     if (!vec || !vec->real || vec->n_complex != 64) {
         TEST_FAIL("cannot load signal_freq vector (expected 64 complex)");
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -127,7 +131,7 @@ static void test_signal_freq(lib80211_fft_plan *plan) {
     float freq_imag[64] = {0};
 
     for (int i = 0; i < 48; i++) {
-        int bin = LIB80211_DATA_BINS[i];
+        int bin        = LIB80211_DATA_BINS[i];
         freq_real[bin] = data_real[i];
         freq_imag[bin] = data_imag[i];
     }
@@ -135,7 +139,7 @@ static void test_signal_freq(lib80211_fft_plan *plan) {
     /* Pilots for symbol 0 */
     float polarity = (float)LIB80211_PILOT_POLARITY[0];
     for (int i = 0; i < 4; i++) {
-        int bin = LIB80211_PILOT_BINS[i];
+        int bin        = LIB80211_PILOT_BINS[i];
         freq_real[bin] = polarity * LIB80211_PILOT_BASE[i];
         freq_imag[bin] = 0.0f;
     }
@@ -147,7 +151,7 @@ static void test_signal_freq(lib80211_fft_plan *plan) {
     int ok = 1;
     for (int sc = -32; sc < 32; sc++) {
         int json_idx = sc + 32;
-        int fft_bin = ((sc % 64) + 64) % 64;
+        int fft_bin  = ((sc % 64) + 64) % 64;
 
         /* Skip pilot bins */
         if (fft_bin == 7 || fft_bin == 21 || fft_bin == 43 || fft_bin == 57)
@@ -158,12 +162,17 @@ static void test_signal_freq(lib80211_fft_plan *plan) {
         float act_r = freq_real[fft_bin];
         float act_i = freq_imag[fft_bin];
 
-        float err = sqrtf((exp_r - act_r) * (exp_r - act_r) +
-                         (exp_i - act_i) * (exp_i - act_i));
+        float err   = sqrtf((exp_r - act_r) * (exp_r - act_r) + (exp_i - act_i) * (exp_i - act_i));
         if (err > 1e-5f) {
             printf("    signal freq: mismatch at sc %d (bin %d): "
                    "expected %.4f+%.4fi, got %.4f+%.4fi (err=%.2e)\n",
-                   sc, fft_bin, exp_r, exp_i, act_r, act_i, err);
+                   sc,
+                   fft_bin,
+                   exp_r,
+                   exp_i,
+                   act_r,
+                   act_i,
+                   err);
             ok = 0;
             break;
         }
@@ -183,7 +192,7 @@ static void test_data_freq_with_pilots(lib80211_fft_plan *plan) {
     TEST_BEGIN("data_freq_pilots_annex_i1");
 
     test_vector *freq_vec = vector_load("annex_i1_data_freq_with_pilots");
-    test_vector *int_vec = vector_load("annex_i1_data_interleaved");
+    test_vector *int_vec  = vector_load("annex_i1_data_interleaved");
 
     if (!freq_vec || !freq_vec->real || freq_vec->n_complex != 64) {
         TEST_FAIL("cannot load data_freq_with_pilots vector");
@@ -203,7 +212,7 @@ static void test_data_freq_with_pilots(lib80211_fft_plan *plan) {
     float freq_imag[64] = {0};
 
     for (int i = 0; i < 48; i++) {
-        int bin = LIB80211_DATA_BINS[i];
+        int bin        = LIB80211_DATA_BINS[i];
         freq_real[bin] = data_real[i];
         freq_imag[bin] = data_imag[i];
     }
@@ -212,7 +221,7 @@ static void test_data_freq_with_pilots(lib80211_fft_plan *plan) {
      * (SIGNAL uses index 0, first DATA symbol uses index 1) */
     float polarity = (float)LIB80211_PILOT_POLARITY[1];
     for (int i = 0; i < 4; i++) {
-        int bin = LIB80211_PILOT_BINS[i];
+        int bin        = LIB80211_PILOT_BINS[i];
         freq_real[bin] = polarity * LIB80211_PILOT_BASE[i];
         freq_imag[bin] = 0.0f;
     }
@@ -220,23 +229,25 @@ static void test_data_freq_with_pilots(lib80211_fft_plan *plan) {
     /* Convert golden vector from subcarrier ordering to FFT bin ordering */
     float expected_real[64], expected_imag[64];
     for (int sc = -32; sc < 32; sc++) {
-        int json_idx = sc + 32;
-        int fft_bin = ((sc % 64) + 64) % 64;
+        int json_idx           = sc + 32;
+        int fft_bin            = ((sc % 64) + 64) % 64;
         expected_real[fft_bin] = freq_vec->real[json_idx];
         expected_imag[fft_bin] = freq_vec->imag[json_idx];
     }
 
     /* Tolerance: golden has 3-decimal precision */
-    if (assert_complex_close(expected_real, expected_imag,
-                            freq_real, freq_imag, 64, 1e-3f, "data freq+pilots")) {
+    if (assert_complex_close(
+            expected_real, expected_imag, freq_real, freq_imag, 64, 1e-3f, "data freq+pilots")) {
         TEST_PASS();
     } else {
         TEST_FAIL("data freq+pilots mismatch");
     }
 
 cleanup:
-    if (freq_vec) vector_free(freq_vec);
-    if (int_vec) vector_free(int_vec);
+    if (freq_vec)
+        vector_free(freq_vec);
+    if (int_vec)
+        vector_free(int_vec);
 }
 
 /* Test STF time domain */
@@ -246,7 +257,8 @@ static void test_stf_time(lib80211_fft_plan *plan) {
     test_vector *vec = vector_load("annex_i1_stf_time");
     if (!vec || !vec->real) {
         TEST_FAIL("cannot load stf_time vector");
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -256,8 +268,13 @@ static void test_stf_time(lib80211_fft_plan *plan) {
     /* The golden vector has windowing (W[0]=0.5, W[159]=0.5) but we generate
      * raw samples without windowing. Compare interior samples (1..158). */
     size_t n_compare = (vec->n_complex < 160) ? vec->n_complex - 2 : 158;
-    if (assert_complex_close(&vec->real[1], &vec->imag[1],
-                            &stf_real[1], &stf_imag[1], n_compare, 1e-3f, "STF time")) {
+    if (assert_complex_close(&vec->real[1],
+                             &vec->imag[1],
+                             &stf_real[1],
+                             &stf_imag[1],
+                             n_compare,
+                             1e-3f,
+                             "STF time")) {
         TEST_PASS();
     } else {
         TEST_FAIL("STF time mismatch");
@@ -273,7 +290,8 @@ static void test_ltf_time(lib80211_fft_plan *plan) {
     test_vector *vec = vector_load("annex_i1_ltf_time");
     if (!vec || !vec->real) {
         TEST_FAIL("cannot load ltf_time vector");
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -290,10 +308,16 @@ static void test_ltf_time(lib80211_fft_plan *plan) {
      * The LTF is real in frequency, so imaginary residuals are small (~0.02)
      * but can have sign differences. Use 0.05 tolerance (matching Python test suite). */
     size_t n_compare = 159;
-    if (vec->n_complex < 161) n_compare = vec->n_complex - 2;
+    if (vec->n_complex < 161)
+        n_compare = vec->n_complex - 2;
 
-    if (assert_complex_close(&vec->real[1], &vec->imag[1],
-                            &ltf_real[1], &ltf_imag[1], n_compare, 5e-2f, "LTF time")) {
+    if (assert_complex_close(&vec->real[1],
+                             &vec->imag[1],
+                             &ltf_real[1],
+                             &ltf_imag[1],
+                             n_compare,
+                             5e-2f,
+                             "LTF time")) {
         TEST_PASS();
     } else {
         TEST_FAIL("LTF time mismatch");

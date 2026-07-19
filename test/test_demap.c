@@ -53,8 +53,10 @@ static void test_demap_annex_i1(void) {
     }
 
 cleanup:
-    if (qam_vec) vector_free(qam_vec);
-    if (int_vec) vector_free(int_vec);
+    if (qam_vec)
+        vector_free(qam_vec);
+    if (int_vec)
+        vector_free(int_vec);
 }
 
 /**
@@ -88,9 +90,9 @@ static void test_demap_bpsk(void) {
 static void test_demap_qpsk(void) {
     TEST_BEGIN("demap_qpsk_roundtrip");
 
-    uint8_t bits[] = {0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1};
+    uint8_t bits[]         = {0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1};
     const size_t n_symbols = 6;
-    const size_t n_bits = 12;
+    const size_t n_bits    = 12;
 
     float mod_r[6], mod_i[6];
     lib80211_modulate(bits, mod_r, mod_i, n_symbols, 2);
@@ -115,14 +117,9 @@ static void test_demap_64qam(void) {
     TEST_BEGIN("demap_64qam_roundtrip");
 
     /* 4 symbols x 6 bits = 24 bits */
-    uint8_t bits[] = {
-        0, 1, 0, 1, 1, 0,
-        1, 0, 1, 0, 0, 1,
-        1, 1, 0, 0, 1, 0,
-        0, 0, 1, 1, 0, 1
-    };
+    uint8_t bits[] = {0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1};
     const size_t n_symbols = 4;
-    const size_t n_bits = 24;
+    const size_t n_bits    = 24;
 
     float mod_r[4], mod_i[4];
     lib80211_modulate(bits, mod_r, mod_i, n_symbols, 6);

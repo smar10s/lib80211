@@ -26,7 +26,8 @@ static void test_htsig_bits_mcs(int mcs, bool sgi) {
     test_vector *vec = vector_load(vec_name);
     if (!vec || !vec->bits || vec->n_bits != 48) {
         TEST_FAIL("cannot load %s (expected 48 bits)", vec_name);
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 

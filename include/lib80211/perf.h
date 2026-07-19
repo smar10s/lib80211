@@ -16,8 +16,7 @@
 #include <time.h>
 #endif
 
-static inline uint64_t perf_now_ns(void)
-{
+static inline uint64_t perf_now_ns(void) {
 #ifdef __APPLE__
     static mach_timebase_info_data_t tb;
     if (__builtin_expect(tb.denom == 0, 0))

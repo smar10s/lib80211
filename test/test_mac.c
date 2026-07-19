@@ -17,24 +17,22 @@ static void test_beacon_structure(void) {
     TEST_BEGIN("beacon_structure");
 
     uint8_t buf[256];
-    memset(buf, 0xAA, sizeof(buf));  /* poison */
+    memset(buf, 0xAA, sizeof(buf)); /* poison */
 
-    const char *ssid = "lib80211";
-    uint8_t bssid[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01};
-    uint8_t channel = 36;
-    uint16_t interval = 100;
+    const char *ssid   = "lib80211";
+    uint8_t bssid[6]   = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01};
+    uint8_t channel    = 36;
+    uint16_t interval  = 100;
     uint64_t timestamp = 0x0000000012345678ULL;
 
-    size_t len = lib80211_build_beacon(buf, sizeof(buf),
-                                       ssid, bssid, channel,
-                                       interval, timestamp);
+    size_t len = lib80211_build_beacon(buf, sizeof(buf), ssid, bssid, channel, interval, timestamp);
 
     /* Expected size:
      * 24 header + 8 timestamp + 2 interval + 2 capability
      * + (2+8) SSID + (2+6) rates + (2+1) DS + (2+4) TIM
      * = 24 + 12 + 10 + 8 + 3 + 6 = 63
      */
-    size_t expected_len = 24 + 12 + (2+8) + (2+6) + (2+1) + (2+4);
+    size_t expected_len = 24 + 12 + (2 + 8) + (2 + 6) + (2 + 1) + (2 + 4);
     if (len != expected_len) {
         TEST_FAIL("beacon length: got %zu, expected %zu", len, expected_len);
         return;
@@ -54,8 +52,8 @@ static void test_beacon_structure(void) {
 
     /* DA = broadcast */
     for (int i = 0; i < 6; i++) {
-        if (buf[4+i] != 0xFF) {
-            TEST_FAIL("DA[%d] = 0x%02X, expected 0xFF", i, buf[4+i]);
+        if (buf[4 + i] != 0xFF) {
+            TEST_FAIL("DA[%d] = 0x%02X, expected 0xFF", i, buf[4 + i]);
             return;
         }
     }
@@ -81,7 +79,7 @@ static void test_beacon_structure(void) {
     /* Timestamp at offset 24 (LE) */
     uint64_t got_ts = 0;
     for (int i = 0; i < 8; i++)
-        got_ts |= (uint64_t)buf[24+i] << (i*8);
+        got_ts |= (uint64_t)buf[24 + i] << (i * 8);
     if (got_ts != timestamp) {
         TEST_FAIL("timestamp mismatch");
         return;
@@ -103,8 +101,8 @@ static void test_beacon_structure(void) {
 
     /* SSID IE at offset 36: tag=0, len=8, "lib80211" */
     size_t ie_pos = 36;
-    if (buf[ie_pos] != 0 || buf[ie_pos+1] != 8) {
-        TEST_FAIL("SSID IE header: tag=%u len=%u", buf[ie_pos], buf[ie_pos+1]);
+    if (buf[ie_pos] != 0 || buf[ie_pos + 1] != 8) {
+        TEST_FAIL("SSID IE header: tag=%u len=%u", buf[ie_pos], buf[ie_pos + 1]);
         return;
     }
     if (memcmp(buf + ie_pos + 2, "lib80211", 8) != 0) {
@@ -115,8 +113,8 @@ static void test_beacon_structure(void) {
 
     /* Supported Rates IE: tag=1, len=6, data={0x8C,0x12,0xB0,0x48,0x60,0x6C} */
     uint8_t expected_rates[] = {0x8C, 0x12, 0xB0, 0x48, 0x60, 0x6C};
-    if (buf[ie_pos] != 1 || buf[ie_pos+1] != 6) {
-        TEST_FAIL("Rates IE header: tag=%u len=%u", buf[ie_pos], buf[ie_pos+1]);
+    if (buf[ie_pos] != 1 || buf[ie_pos + 1] != 6) {
+        TEST_FAIL("Rates IE header: tag=%u len=%u", buf[ie_pos], buf[ie_pos + 1]);
         return;
     }
     if (memcmp(buf + ie_pos + 2, expected_rates, 6) != 0) {
@@ -126,15 +124,15 @@ static void test_beacon_structure(void) {
     ie_pos += 2 + 6;
 
     /* DS Parameter IE: tag=3, len=1, channel=36 */
-    if (buf[ie_pos] != 3 || buf[ie_pos+1] != 1 || buf[ie_pos+2] != 36) {
-        TEST_FAIL("DS IE: tag=%u len=%u ch=%u", buf[ie_pos], buf[ie_pos+1], buf[ie_pos+2]);
+    if (buf[ie_pos] != 3 || buf[ie_pos + 1] != 1 || buf[ie_pos + 2] != 36) {
+        TEST_FAIL("DS IE: tag=%u len=%u ch=%u", buf[ie_pos], buf[ie_pos + 1], buf[ie_pos + 2]);
         return;
     }
     ie_pos += 2 + 1;
 
     /* TIM IE: tag=5, len=4, data={0,1,0,0} */
-    if (buf[ie_pos] != 5 || buf[ie_pos+1] != 4) {
-        TEST_FAIL("TIM IE header: tag=%u len=%u", buf[ie_pos], buf[ie_pos+1]);
+    if (buf[ie_pos] != 5 || buf[ie_pos + 1] != 4) {
+        TEST_FAIL("TIM IE header: tag=%u len=%u", buf[ie_pos], buf[ie_pos + 1]);
         return;
     }
     uint8_t expected_tim[] = {0, 1, 0, 0};
@@ -156,12 +154,12 @@ static void test_deauth_structure(void) {
     uint8_t buf[64];
     memset(buf, 0xAA, sizeof(buf));
 
-    uint8_t da[6] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55};
-    uint8_t sa[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01};
+    uint8_t da[6]    = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55};
+    uint8_t sa[6]    = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01};
     uint8_t bssid[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01};
-    uint16_t reason = 7;
+    uint16_t reason  = 7;
 
-    size_t len = lib80211_build_deauth(buf, sizeof(buf), da, sa, bssid, reason);
+    size_t len       = lib80211_build_deauth(buf, sizeof(buf), da, sa, bssid, reason);
 
     if (len != 26) {
         TEST_FAIL("deauth length: got %zu, expected 26", len);
@@ -213,8 +211,8 @@ static void test_fcs_roundtrip(void) {
     uint8_t buf[64];
     uint8_t da[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-    size_t len = lib80211_build_deauth(buf, sizeof(buf), da, NULL, NULL,
-                                       LIB80211_DEAUTH_REASON_DEFAULT);
+    size_t len =
+        lib80211_build_deauth(buf, sizeof(buf), da, NULL, NULL, LIB80211_DEAUTH_REASON_DEFAULT);
     if (len == 0) {
         TEST_FAIL("deauth build failed");
         return;
@@ -246,11 +244,13 @@ static void test_fcs_known_vector(void) {
     lib80211_append_fcs(data, 9);
 
     /* Expected FCS bytes (little-endian): 0x26, 0x39, 0xF4, 0xCB */
-    if (data[9]  != 0x26 || data[10] != 0x39 ||
-        data[11] != 0xF4 || data[12] != 0xCB) {
+    if (data[9] != 0x26 || data[10] != 0x39 || data[11] != 0xF4 || data[12] != 0xCB) {
         TEST_FAIL("FCS for '123456789': got %02X %02X %02X %02X, "
                   "expected 26 39 F4 CB",
-                  data[9], data[10], data[11], data[12]);
+                  data[9],
+                  data[10],
+                  data[11],
+                  data[12]);
         return;
     }
 
@@ -271,8 +271,7 @@ static void test_null_bssid_default(void) {
     TEST_BEGIN("null_bssid_default");
 
     uint8_t buf[256];
-    size_t len = lib80211_build_beacon(buf, sizeof(buf),
-                                       "test", NULL, 1, 100, 0);
+    size_t len = lib80211_build_beacon(buf, sizeof(buf), "test", NULL, 1, 100, 0);
     if (len == 0) {
         TEST_FAIL("build_beacon with NULL bssid failed");
         return;
@@ -299,8 +298,7 @@ static void test_empty_ssid(void) {
     TEST_BEGIN("empty_ssid");
 
     uint8_t buf[256];
-    size_t len = lib80211_build_beacon(buf, sizeof(buf),
-                                       "", NULL, 6, 100, 0);
+    size_t len = lib80211_build_beacon(buf, sizeof(buf), "", NULL, 6, 100, 0);
     if (len == 0) {
         TEST_FAIL("build_beacon with empty SSID failed");
         return;
@@ -329,9 +327,8 @@ static void test_max_ssid(void) {
     TEST_BEGIN("max_ssid_32");
 
     uint8_t buf[256];
-    const char *ssid32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";  /* 32 chars */
-    size_t len = lib80211_build_beacon(buf, sizeof(buf),
-                                       ssid32, NULL, 11, 100, 0);
+    const char *ssid32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"; /* 32 chars */
+    size_t len         = lib80211_build_beacon(buf, sizeof(buf), ssid32, NULL, 11, 100, 0);
     if (len == 0) {
         TEST_FAIL("build_beacon with 32-char SSID failed");
         return;
@@ -339,8 +336,7 @@ static void test_max_ssid(void) {
 
     /* SSID IE at offset 36: tag=0, len=32 */
     if (buf[36] != 0 || buf[37] != 32) {
-        TEST_FAIL("SSID IE: tag=%u len=%u, expected tag=0 len=32",
-                  buf[36], buf[37]);
+        TEST_FAIL("SSID IE: tag=%u len=%u, expected tag=0 len=32", buf[36], buf[37]);
         return;
     }
 
@@ -361,9 +357,8 @@ static void test_ssid_too_long(void) {
     TEST_BEGIN("ssid_too_long");
 
     uint8_t buf[256];
-    const char *ssid33 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456";  /* 33 chars */
-    size_t len = lib80211_build_beacon(buf, sizeof(buf),
-                                       ssid33, NULL, 1, 100, 0);
+    const char *ssid33 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456"; /* 33 chars */
+    size_t len         = lib80211_build_beacon(buf, sizeof(buf), ssid33, NULL, 1, 100, 0);
     if (len != 0) {
         TEST_FAIL("expected 0 for 33-char SSID, got %zu", len);
         return;
@@ -379,17 +374,15 @@ static void test_ssid_too_long(void) {
 static void test_buffer_too_small(void) {
     TEST_BEGIN("buffer_too_small");
 
-    uint8_t buf[10];  /* Way too small for any frame */
+    uint8_t buf[10]; /* Way too small for any frame */
 
-    size_t len = lib80211_build_beacon(buf, sizeof(buf),
-                                       "test", NULL, 1, 100, 0);
+    size_t len = lib80211_build_beacon(buf, sizeof(buf), "test", NULL, 1, 100, 0);
     if (len != 0) {
         TEST_FAIL("beacon: expected 0 for tiny buffer, got %zu", len);
         return;
     }
 
-    len = lib80211_build_deauth(buf, sizeof(buf),
-                                LIB80211_BROADCAST, NULL, NULL, 7);
+    len = lib80211_build_deauth(buf, sizeof(buf), LIB80211_BROADCAST, NULL, NULL, 7);
     if (len != 0) {
         TEST_FAIL("deauth: expected 0 for tiny buffer, got %zu", len);
         return;
@@ -406,9 +399,8 @@ static void test_beacon_fcs_roundtrip(void) {
     TEST_BEGIN("beacon_fcs_roundtrip");
 
     uint8_t buf[256];
-    size_t len = lib80211_build_beacon(buf, sizeof(buf),
-                                       "TestNetwork", NULL, 44,
-                                       100, 0x00000000DEADBEEFULL);
+    size_t len = lib80211_build_beacon(
+        buf, sizeof(buf), "TestNetwork", NULL, 44, 100, 0x00000000DEADBEEFULL);
     if (len == 0) {
         TEST_FAIL("build_beacon failed");
         return;
@@ -432,10 +424,10 @@ static void test_deauth_null_sa(void) {
     TEST_BEGIN("deauth_null_sa");
 
     uint8_t buf[64];
-    uint8_t da[6] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+    uint8_t da[6]    = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
     uint8_t bssid[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x02};
 
-    size_t len = lib80211_build_deauth(buf, sizeof(buf), da, NULL, bssid, 1);
+    size_t len       = lib80211_build_deauth(buf, sizeof(buf), da, NULL, bssid, 1);
     if (len != 26) {
         TEST_FAIL("deauth length: got %zu, expected 26", len);
         return;

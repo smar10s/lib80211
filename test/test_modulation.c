@@ -36,16 +36,18 @@ static void test_modulate_annex_i1(void) {
     lib80211_modulate(int_vec->bits, out_real, out_imag, 48, 4);
 
     /* Golden vector has 3-decimal precision -> tolerance ~1e-3 */
-    if (assert_complex_close(qam_vec->real, qam_vec->imag,
-                            out_real, out_imag, 48, 1e-3f, "16-QAM")) {
+    if (assert_complex_close(
+            qam_vec->real, qam_vec->imag, out_real, out_imag, 48, 1e-3f, "16-QAM")) {
         TEST_PASS();
     } else {
         TEST_FAIL("16-QAM modulation mismatch");
     }
 
 cleanup:
-    if (int_vec) vector_free(int_vec);
-    if (qam_vec) vector_free(qam_vec);
+    if (int_vec)
+        vector_free(int_vec);
+    if (qam_vec)
+        vector_free(qam_vec);
 }
 
 /* Test BPSK normalization: output should be +/-1 */
@@ -56,18 +58,23 @@ static void test_modulate_bpsk(void) {
     float out_r[4], out_i[4];
     lib80211_modulate(bits, out_r, out_i, 4, 1);
 
-    int ok = 1;
-    float expected_r[] = {-1.0f, 1.0f, -1.0f, 1.0f};  /* bit=0->-1, bit=1->+1 */
+    int ok             = 1;
+    float expected_r[] = {-1.0f, 1.0f, -1.0f, 1.0f}; /* bit=0->-1, bit=1->+1 */
     for (int i = 0; i < 4; i++) {
         if (out_r[i] != expected_r[i] || out_i[i] != 0.0f) {
             printf("    BPSK[%d]: expected %.1f+0i, got %.4f+%.4fi\n",
-                   i, expected_r[i], out_r[i], out_i[i]);
+                   i,
+                   expected_r[i],
+                   out_r[i],
+                   out_i[i]);
             ok = 0;
         }
     }
 
-    if (ok) TEST_PASS();
-    else TEST_FAIL("BPSK values incorrect");
+    if (ok)
+        TEST_PASS();
+    else
+        TEST_FAIL("BPSK values incorrect");
 }
 
 int main(void) {

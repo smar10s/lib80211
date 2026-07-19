@@ -14,7 +14,8 @@
 
 int lib80211_make_signal_bits(int rate_mbps, int length_bytes, uint8_t *out_bits) {
     const lib80211_rate_info *rate = lib80211_rate_lookup(rate_mbps);
-    if (!rate) return -1;
+    if (!rate)
+        return -1;
 
     /* Bits 0-3: rate (4 bits, R1 at bit 0 = LSB) */
     out_bits[0] = (rate->rate_bits >> 0) & 1;
@@ -42,9 +43,8 @@ int lib80211_make_signal_bits(int rate_mbps, int length_bytes, uint8_t *out_bits
     return 0;
 }
 
-void lib80211_make_lsig_symbol(lib80211_fft_plan *plan,
-                               int rate_mbps, int length_bytes,
-                               float *out_real, float *out_imag) {
+void lib80211_make_lsig_symbol(
+    lib80211_fft_plan *plan, int rate_mbps, int length_bytes, float *out_real, float *out_imag) {
     uint8_t sig_bits[24];
     lib80211_make_signal_bits(rate_mbps, length_bytes, sig_bits);
 

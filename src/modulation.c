@@ -19,10 +19,10 @@
  * 256-QAM: 1/sqrt(170)
  */
 static const float NORM_BPSK   = 1.0f;
-static const float NORM_QPSK   = 0.7071067811865475f;  /* 1/sqrt(2) */
-static const float NORM_16QAM  = 0.3162277660168380f;  /* 1/sqrt(10) */
-static const float NORM_64QAM  = 0.1543033499620919f;  /* 1/sqrt(42) */
-static const float NORM_256QAM = 0.0766964989121553f;  /* 1/sqrt(170) */
+static const float NORM_QPSK   = 0.7071067811865475f; /* 1/sqrt(2) */
+static const float NORM_16QAM  = 0.3162277660168380f; /* 1/sqrt(10) */
+static const float NORM_64QAM  = 0.1543033499620919f; /* 1/sqrt(42) */
+static const float NORM_256QAM = 0.0766964989121553f; /* 1/sqrt(170) */
 
 /**
  * Convert Gray-coded bits to PAM level.
@@ -45,8 +45,8 @@ static inline int gray_to_pam(const uint8_t *bits, int n_bits) {
     return 2 * bin - (M - 1);
 }
 
-void lib80211_modulate(const uint8_t *bits, float *out_real, float *out_imag,
-                       size_t n_symbols, int n_bpsc) {
+void lib80211_modulate(
+    const uint8_t *bits, float *out_real, float *out_imag, size_t n_symbols, int n_bpsc) {
     switch (n_bpsc) {
     case 1: /* BPSK: 1 -> +1, 0 -> -1 */
         for (size_t i = 0; i < n_symbols; i++) {
@@ -57,7 +57,7 @@ void lib80211_modulate(const uint8_t *bits, float *out_real, float *out_imag,
 
     case 2: /* QPSK: 2 bits -> I, Q. bit=1 -> +1, bit=0 -> -1 */
         for (size_t i = 0; i < n_symbols; i++) {
-            float i_val = bits[i * 2]     ? NORM_QPSK : -NORM_QPSK;
+            float i_val = bits[i * 2] ? NORM_QPSK : -NORM_QPSK;
             float q_val = bits[i * 2 + 1] ? NORM_QPSK : -NORM_QPSK;
             out_real[i] = i_val;
             out_imag[i] = q_val;

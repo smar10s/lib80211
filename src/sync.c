@@ -17,11 +17,11 @@
 #include <string.h>
 
 /* STF autocorrelation parameters */
-#define STF_LAG         16
-#define STF_WINDOW      64
-#define STF_THRESHOLD   0.5f
+#define STF_LAG 16
+#define STF_WINDOW 64
+#define STF_THRESHOLD 0.5f
 #define STF_MIN_PERIODS 4
-#define STF_DUR_THRESH  0.42f
+#define STF_DUR_THRESH 0.42f
 
 /* ========================================================================
  * Internal: STF detection
@@ -31,9 +31,7 @@
  * Compute normalized autocorrelation at given lag/window for one position.
  * Returns |P| / sqrt(E1*E2) where P = sum(x[n]*conj(x[n+lag])).
  */
-static float autocorr_metric(const float *re, const float *im,
-                             size_t pos, int lag, int window)
-{
+static float autocorr_metric(const float *re, const float *im, size_t pos, int lag, int window) {
     float pr = 0.0f, pi = 0.0f;
     float e1 = 0.0f, e2 = 0.0f;
 
@@ -52,7 +50,8 @@ static float autocorr_metric(const float *re, const float *im,
     }
 
     float denom = sqrtf(e1 * e2);
-    if (denom < 1e-12f) return 0.0f;
+    if (denom < 1e-12f)
+        return 0.0f;
 
     float p_mag = sqrtf(pr * pr + pi * pi);
     return p_mag / denom;
@@ -61,10 +60,13 @@ static float autocorr_metric(const float *re, const float *im,
 /**
  * Compute complex autocorrelation at given lag/window (returns real/imag parts).
  */
-static void autocorr_complex(const float *re, const float *im,
-                             size_t pos, int lag, int window,
-                             float *out_re, float *out_im)
-{
+static void autocorr_complex(const float *re,
+                             const float *im,
+                             size_t pos,
+                             int lag,
+                             int window,
+                             float *out_re,
+                             float *out_im) {
     float pr = 0.0f, pi = 0.0f;
 
     for (int k = 0; k < window; k++) {
@@ -88,11 +90,10 @@ static void autocorr_complex(const float *re, const float *im,
  * so AC/total ≈ 1.0. A DC-offset region has AC/total ≈ noise/(DC²+noise) which
  * is typically < 0.5.
  */
-static int dc_reject_check(const float *re, const float *im,
-                           size_t pos, size_t n_samples)
-{
+static int dc_reject_check(const float *re, const float *im, size_t pos, size_t n_samples) {
     int len = STF_WINDOW;
-    if (pos + (size_t)len > n_samples) return 0;
+    if (pos + (size_t)len > n_samples)
+        return 0;
 
     /* Compute mean (DC component) */
     float sum_r = 0.0f, sum_i = 0.0f;
@@ -100,12 +101,12 @@ static int dc_reject_check(const float *re, const float *im,
         sum_r += re[pos + k];
         sum_i += im[pos + k];
     }
-    float mean_r = sum_r / (float)len;
-    float mean_i = sum_i / (float)len;
+    float mean_r      = sum_r / (float)len;
+    float mean_i      = sum_i / (float)len;
 
     /* Compute total power and AC power (= total - DC) */
     float total_power = 0.0f;
-    float ac_power = 0.0f;
+    float ac_power    = 0.0f;
     for (int k = 0; k < len; k++) {
         float r = re[pos + k];
         float i = im[pos + k];
@@ -115,7 +116,8 @@ static int dc_reject_check(const float *re, const float *im,
         ac_power += ar * ar + ai * ai;
     }
 
-    if (total_power < 1e-20f) return 0;
+    if (total_power < 1e-20f)
+        return 0;
 
     /* Real STF: AC/total ≈ 0.98-1.0.  DC+noise: ≈ 0.3-0.5.
      * Threshold at 0.7 gives robust separation. */
@@ -127,9 +129,7 @@ static int dc_reject_check(const float *re, const float *im,
  * Returns 1 if >= STF_MIN_PERIODS consecutive periods pass, 0 otherwise.
  * Also rejects DC-only signals via AC power ratio check.
  */
-static int stf_duration_check(const float *re, const float *im,
-                              size_t n_samples, size_t pos)
-{
+static int stf_duration_check(const float *re, const float *im, size_t n_samples, size_t pos) {
     int consec = 0;
     for (size_t n = pos; n + STF_LAG + STF_LAG <= n_samples; n += STF_LAG) {
         float m = autocorr_metric(re, im, n, STF_LAG, STF_LAG);
@@ -156,12 +156,11 @@ static int stf_duration_check(const float *re, const float *im,
  * at candidate positions.
  * Returns index of first sample of detected STF, or -1.
  */
-static int detect_stf(const float *re, const float *im, size_t n_samples)
-{
+static int detect_stf(const float *re, const float *im, size_t n_samples) {
     if (n_samples < (size_t)(STF_WINDOW + STF_LAG))
         return -1;
 
-    size_t max_pos = n_samples - STF_WINDOW - STF_LAG;
+    size_t max_pos        = n_samples - STF_WINDOW - STF_LAG;
 
     /* Squared threshold for cheap comparison: |P|^2 >= thresh^2 * E1 * E2 */
     const float thresh_sq = STF_THRESHOLD * STF_THRESHOLD;
@@ -181,7 +180,7 @@ static int detect_stf(const float *re, const float *im, size_t n_samples)
 
     for (size_t n = 0; n <= max_pos; n++) {
         /* Cheap squared comparison — no sqrt or division */
-        float p_sq = pr * pr + pi_acc * pi_acc;
+        float p_sq   = pr * pr + pi_acc * pi_acc;
         float e_prod = e1 * e2;
 
         if (p_sq >= thresh_sq * e_prod && e_prod > 1e-20f) {
@@ -216,8 +215,7 @@ static int detect_stf(const float *re, const float *im, size_t n_samples)
  * Internal: Coarse CFO from STF
  * ======================================================================== */
 
-static float estimate_coarse_cfo(const float *re, const float *im, size_t stf_start)
-{
+static float estimate_coarse_cfo(const float *re, const float *im, size_t stf_start) {
     /* Skip first 3 periods (48 samples) for ramp-up, use 96 samples (6 periods) */
     size_t offset = stf_start + 48;
     float cr, ci;
@@ -233,9 +231,7 @@ static float estimate_coarse_cfo(const float *re, const float *im, size_t stf_st
 /**
  * Generate LTF time-domain reference (64 samples) via IFFT of LTF frequency sequence.
  */
-static void generate_ltf_reference(lib80211_fft_plan *plan,
-                                   float *ref_re, float *ref_im)
-{
+static void generate_ltf_reference(lib80211_fft_plan *plan, float *ref_re, float *ref_im) {
     float zeros[64] = {0};
     lib80211_fft_inverse(plan, LIB80211_LTF_FREQ_REAL, zeros, ref_re, ref_im);
 }
@@ -244,10 +240,8 @@ static void generate_ltf_reference(lib80211_fft_plan *plan,
  * Cross-correlation magnitude at a given offset.
  * Computes |sum(x[pos+k] * conj(ref[k]))| for k=0..63.
  */
-static float xcorr_mag(const float *re, const float *im,
-                       const float *ref_re, const float *ref_im,
-                       size_t pos)
-{
+static float
+xcorr_mag(const float *re, const float *im, const float *ref_re, const float *ref_im, size_t pos) {
     float pr = 0.0f, pi = 0.0f;
     for (int k = 0; k < 64; k++) {
         float xr = re[pos + k];
@@ -265,25 +259,24 @@ static float xcorr_mag(const float *re, const float *im,
  * Find LTF start (first FFT symbol, after GI2) using cross-correlation.
  * Searches around expected position: stf_start + 160 (STF) + 32 (GI2).
  */
-static size_t find_ltf_start(lib80211_fft_plan *plan,
-                             const float *re, const float *im,
-                             size_t n_samples, size_t stf_start)
-{
+static size_t find_ltf_start(
+    lib80211_fft_plan *plan, const float *re, const float *im, size_t n_samples, size_t stf_start) {
     float ref_re[64], ref_im[64];
     generate_ltf_reference(plan, ref_re, ref_im);
 
     /* Expected position of first LTF FFT symbol */
-    int expected = (int)stf_start + LIB80211_STF_SAMPLES + 32;
+    int expected  = (int)stf_start + LIB80211_STF_SAMPLES + 32;
 
     /* Search window: ±32 samples */
     int search_lo = expected - 32;
     int search_hi = expected + 32;
-    if (search_lo < 0) search_lo = 0;
+    if (search_lo < 0)
+        search_lo = 0;
     if ((size_t)(search_hi + 64) > n_samples)
         search_hi = (int)(n_samples - 64);
 
     float best_val = 0.0f;
-    int best_pos = expected;
+    int best_pos   = expected;
 
     for (int pos = search_lo; pos <= search_hi; pos++) {
         float val = xcorr_mag(re, im, ref_re, ref_im, (size_t)pos);
@@ -300,8 +293,7 @@ static size_t find_ltf_start(lib80211_fft_plan *plan,
  * Internal: Fine CFO from LTF
  * ======================================================================== */
 
-static float estimate_fine_cfo(const float *re, const float *im, size_t ltf_start)
-{
+static float estimate_fine_cfo(const float *re, const float *im, size_t ltf_start) {
     float cr, ci;
     autocorr_complex(re, im, ltf_start, 64, 64, &cr, &ci);
     /* autocorr angle = -cfo * lag, so negate to get cfo */
@@ -317,11 +309,12 @@ static float estimate_fine_cfo(const float *re, const float *im, size_t ltf_star
  * Caller can reuse these buffers for subsequent processing (saves a copy).
  */
 int lib80211_sync_detect_with_work(lib80211_fft_plan *plan,
-                                   const float *iq_real, const float *iq_imag,
+                                   const float *iq_real,
+                                   const float *iq_imag,
                                    size_t n_samples,
-                                   float *work_re, float *work_im,
-                                   lib80211_sync_result *result)
-{
+                                   float *work_re,
+                                   float *work_im,
+                                   lib80211_sync_result *result) {
     if (!plan || !iq_real || !iq_imag || !result || !work_re || !work_im || n_samples < 320)
         return -1;
 
@@ -333,7 +326,7 @@ int lib80211_sync_detect_with_work(lib80211_fft_plan *plan,
     result->frame_start = (size_t)stf_pos;
 
     /* Step 2: Coarse CFO from STF */
-    float coarse_cfo = 0.0f;
+    float coarse_cfo    = 0.0f;
     if ((size_t)(stf_pos + 48 + 96 + STF_LAG) <= n_samples) {
         coarse_cfo = estimate_coarse_cfo(iq_real, iq_imag, (size_t)stf_pos);
     }
@@ -347,27 +340,28 @@ int lib80211_sync_detect_with_work(lib80211_fft_plan *plan,
     }
 
     /* Step 4: Find LTF timing on corrected signal */
-    size_t ltf_pos = find_ltf_start(plan, work_re, work_im, n_samples, (size_t)stf_pos);
+    size_t ltf_pos    = find_ltf_start(plan, work_re, work_im, n_samples, (size_t)stf_pos);
     result->ltf_start = ltf_pos;
 
     /* Step 5: Fine CFO from corrected LTF */
-    float fine_cfo = 0.0f;
+    float fine_cfo    = 0.0f;
     if (ltf_pos + 128 <= n_samples) {
         fine_cfo = estimate_fine_cfo(work_re, work_im, ltf_pos);
     }
 
     /* Step 6: Combined CFO */
-    result->cfo_rad = coarse_cfo + fine_cfo;
+    result->cfo_rad     = coarse_cfo + fine_cfo;
     /* Store coarse CFO so caller can apply only the fine delta */
-    result->frame_start = (size_t)stf_pos;  /* already set above, kept for clarity */
+    result->frame_start = (size_t)stf_pos; /* already set above, kept for clarity */
 
     return 0;
 }
 
 int lib80211_sync_detect(lib80211_fft_plan *plan,
-                         const float *iq_real, const float *iq_imag,
-                         size_t n_samples, lib80211_sync_result *result)
-{
+                         const float *iq_real,
+                         const float *iq_imag,
+                         size_t n_samples,
+                         lib80211_sync_result *result) {
     if (!plan || !iq_real || !iq_imag || !result || n_samples < 320)
         return -1;
 
@@ -380,34 +374,32 @@ int lib80211_sync_detect(lib80211_fft_plan *plan,
         return -1;
     }
 
-    int rc = lib80211_sync_detect_with_work(plan, iq_real, iq_imag, n_samples,
-                                            work_re, work_im, result);
+    int rc =
+        lib80211_sync_detect_with_work(plan, iq_real, iq_imag, n_samples, work_re, work_im, result);
 
     free(work_re);
     free(work_im);
     return rc;
 }
 
-void lib80211_cfo_correct(float *iq_real, float *iq_imag,
-                          size_t n_samples, float cfo_rad)
-{
+void lib80211_cfo_correct(float *iq_real, float *iq_imag, size_t n_samples, float cfo_rad) {
     /* Incremental rotation: avoids precision loss from large phase values.
      * Re-normalize every 256 samples to prevent magnitude drift. */
-    float c = cosf(-cfo_rad);
-    float s = sinf(-cfo_rad);
+    float c     = cosf(-cfo_rad);
+    float s     = sinf(-cfo_rad);
     float rot_r = 1.0f, rot_i = 0.0f;
 
     for (size_t n = 0; n < n_samples; n++) {
-        float r = iq_real[n];
-        float i = iq_imag[n];
-        iq_real[n] = r * rot_r - i * rot_i;
-        iq_imag[n] = r * rot_i + i * rot_r;
+        float r     = iq_real[n];
+        float i     = iq_imag[n];
+        iq_real[n]  = r * rot_r - i * rot_i;
+        iq_imag[n]  = r * rot_i + i * rot_r;
 
         /* Rotate accumulator: (rot_r + j*rot_i) *= (c + j*s) */
         float new_r = rot_r * c - rot_i * s;
         float new_i = rot_r * s + rot_i * c;
-        rot_r = new_r;
-        rot_i = new_i;
+        rot_r       = new_r;
+        rot_i       = new_i;
 
         /* Re-normalize every 256 samples to prevent drift */
         if ((n & 0xFF) == 0xFF) {

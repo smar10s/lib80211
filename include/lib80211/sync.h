@@ -5,9 +5,9 @@
 #include <stddef.h>
 
 typedef struct {
-    size_t frame_start;     /* sample index of L-STF start */
-    float cfo_rad;          /* combined CFO in radians/sample */
-    size_t ltf_start;       /* sample index of first LTF FFT symbol (after GI2) */
+    size_t frame_start; /* sample index of L-STF start */
+    float cfo_rad;      /* combined CFO in radians/sample */
+    size_t ltf_start;   /* sample index of first LTF FFT symbol (after GI2) */
 } lib80211_sync_result;
 
 /**
@@ -25,8 +25,10 @@ typedef struct {
  * @return 0 on success, -1 if no frame detected
  */
 int lib80211_sync_detect(lib80211_fft_plan *plan,
-                         const float *iq_real, const float *iq_imag,
-                         size_t n_samples, lib80211_sync_result *result);
+                         const float *iq_real,
+                         const float *iq_imag,
+                         size_t n_samples,
+                         lib80211_sync_result *result);
 
 /**
  * Apply CFO correction to IQ samples in-place.
@@ -38,7 +40,6 @@ int lib80211_sync_detect(lib80211_fft_plan *plan,
  * @param n_samples  Number of samples
  * @param cfo_rad    CFO in radians/sample (as returned by sync_detect)
  */
-void lib80211_cfo_correct(float *iq_real, float *iq_imag,
-                          size_t n_samples, float cfo_rad);
+void lib80211_cfo_correct(float *iq_real, float *iq_imag, size_t n_samples, float cfo_rad);
 
 #endif /* LIB80211_SYNC_H */

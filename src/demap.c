@@ -18,14 +18,14 @@
 #include <arm_neon.h>
 #endif
 
-void lib80211_soft_demap(const float *rx_real, const float *rx_imag,
-                         float *soft_bits, size_t n_symbols, int n_bpsc) {
+void lib80211_soft_demap(
+    const float *rx_real, const float *rx_imag, float *soft_bits, size_t n_symbols, int n_bpsc) {
     switch (n_bpsc) {
     case 1: /* BPSK: LLR = 2 * Re */
     {
 #ifdef __ARM_NEON
         const float32x4_t v2 = vdupq_n_f32(2.0f);
-        size_t i = 0;
+        size_t i             = 0;
         for (; i + 4 <= n_symbols; i += 4) {
             float32x4_t r = vld1q_f32(rx_real + i);
             vst1q_f32(soft_bits + i, vmulq_f32(r, v2));
@@ -44,11 +44,11 @@ void lib80211_soft_demap(const float *rx_real, const float *rx_imag,
         const float scale = 2.0f * 1.4142135623730951f; /* 2*sqrt(2) */
 #ifdef __ARM_NEON
         const float32x4_t scale_v = vdupq_n_f32(scale);
-        size_t i = 0;
+        size_t i                  = 0;
         for (; i + 4 <= n_symbols; i += 4) {
-            float32x4_t r = vmulq_f32(vld1q_f32(rx_real + i), scale_v);
-            float32x4_t m = vmulq_f32(vld1q_f32(rx_imag + i), scale_v);
-            float32x4x2_t out = { { r, m } };
+            float32x4_t r     = vmulq_f32(vld1q_f32(rx_real + i), scale_v);
+            float32x4_t m     = vmulq_f32(vld1q_f32(rx_imag + i), scale_v);
+            float32x4x2_t out = {{r, m}};
             vst2q_f32(soft_bits + i * 2, out);
         }
         for (; i < n_symbols; i++) {
@@ -69,21 +69,21 @@ void lib80211_soft_demap(const float *rx_real, const float *rx_imag,
         const float scale = 3.1622776601683795f; /* sqrt(10) */
 #ifdef __ARM_NEON
         const float32x4_t scale_v = vdupq_n_f32(scale);
-        const float32x4_t v2 = vdupq_n_f32(2.0f);
-        size_t i = 0;
+        const float32x4_t v2      = vdupq_n_f32(2.0f);
+        size_t i                  = 0;
         for (; i + 4 <= n_symbols; i += 4) {
-            float32x4_t x = vmulq_f32(vld1q_f32(rx_real + i), scale_v);
-            float32x4_t y = vmulq_f32(vld1q_f32(rx_imag + i), scale_v);
-            float32x4_t ax = vabsq_f32(x);
-            float32x4_t ay = vabsq_f32(y);
-            float32x4_t bit1 = vsubq_f32(v2, ax);
-            float32x4_t bit3 = vsubq_f32(v2, ay);
-            float32x4x4_t out = { { x, bit1, y, bit3 } };
+            float32x4_t x     = vmulq_f32(vld1q_f32(rx_real + i), scale_v);
+            float32x4_t y     = vmulq_f32(vld1q_f32(rx_imag + i), scale_v);
+            float32x4_t ax    = vabsq_f32(x);
+            float32x4_t ay    = vabsq_f32(y);
+            float32x4_t bit1  = vsubq_f32(v2, ax);
+            float32x4_t bit3  = vsubq_f32(v2, ay);
+            float32x4x4_t out = {{x, bit1, y, bit3}};
             vst4q_f32(soft_bits + i * 4, out);
         }
         for (; i < n_symbols; i++) {
-            float x = rx_real[i] * scale;
-            float y = rx_imag[i] * scale;
+            float x              = rx_real[i] * scale;
+            float y              = rx_imag[i] * scale;
             soft_bits[i * 4]     = x;
             soft_bits[i * 4 + 1] = 2.0f - fabsf(x);
             soft_bits[i * 4 + 2] = y;
@@ -91,8 +91,8 @@ void lib80211_soft_demap(const float *rx_real, const float *rx_imag,
         }
 #else
         for (size_t i = 0; i < n_symbols; i++) {
-            float x = rx_real[i] * scale;
-            float y = rx_imag[i] * scale;
+            float x              = rx_real[i] * scale;
+            float y              = rx_imag[i] * scale;
             soft_bits[i * 4]     = x;
             soft_bits[i * 4 + 1] = 2.0f - fabsf(x);
             soft_bits[i * 4 + 2] = y;
@@ -106,10 +106,10 @@ void lib80211_soft_demap(const float *rx_real, const float *rx_imag,
     {
         const float scale = 6.4807406984078604f; /* sqrt(42) */
         for (size_t i = 0; i < n_symbols; i++) {
-            float x = rx_real[i] * scale;
-            float y = rx_imag[i] * scale;
-            float ax = fabsf(x);
-            float ay = fabsf(y);
+            float x              = rx_real[i] * scale;
+            float y              = rx_imag[i] * scale;
+            float ax             = fabsf(x);
+            float ay             = fabsf(y);
             soft_bits[i * 6]     = x;
             soft_bits[i * 6 + 1] = 4.0f - ax;
             soft_bits[i * 6 + 2] = 2.0f - fabsf(ax - 4.0f);
@@ -124,12 +124,12 @@ void lib80211_soft_demap(const float *rx_real, const float *rx_imag,
     {
         const float scale = 13.038404810405298f; /* sqrt(170) */
         for (size_t i = 0; i < n_symbols; i++) {
-            float x = rx_real[i] * scale;
-            float y = rx_imag[i] * scale;
-            float ax = fabsf(x);
-            float ay = fabsf(y);
-            float ax1 = fabsf(ax - 8.0f);
-            float ay1 = fabsf(ay - 8.0f);
+            float x              = rx_real[i] * scale;
+            float y              = rx_imag[i] * scale;
+            float ax             = fabsf(x);
+            float ay             = fabsf(y);
+            float ax1            = fabsf(ax - 8.0f);
+            float ay1            = fabsf(ay - 8.0f);
             soft_bits[i * 8]     = x;
             soft_bits[i * 8 + 1] = 8.0f - ax;
             soft_bits[i * 8 + 2] = 4.0f - ax1;

@@ -24,12 +24,70 @@
 static const float LTF_FREQ_REAL[N] = {
     /* bin 0 (DC) */ 0,
     /* bins 1-26 (subcarriers +1..+26) */
-    1, -1, -1, 1, 1, -1, 1, -1, 1, -1, -1, -1, -1, -1, 1, 1,
-    -1, -1, 1, -1, 1, -1, 1, 1, 1, 1,
-    /* bins 27-37 (guard/null) */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1,
+    -1,
+    -1,
+    1,
+    1,
+    -1,
+    1,
+    -1,
+    1,
+    -1,
+    -1,
+    -1,
+    -1,
+    -1,
+    1,
+    1,
+    -1,
+    -1,
+    1,
+    -1,
+    1,
+    -1,
+    1,
+    1,
+    1,
+    1,
+    /* bins 27-37 (guard/null) */ 0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     /* bins 38-63 (subcarriers -26..-1) */
-    1, 1, -1, -1, 1, 1, -1, 1, -1, 1, 1, 1, 1, 1, 1, -1,
-    -1, 1, 1, -1, 1, -1, 1, 1, 1, 1,
+    1,
+    1,
+    -1,
+    -1,
+    1,
+    1,
+    -1,
+    1,
+    -1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    -1,
+    -1,
+    1,
+    1,
+    -1,
+    1,
+    -1,
+    1,
+    1,
+    1,
+    1,
 };
 
 /* STF frequency domain (Table 17-4): only every 4th subcarrier non-zero */
@@ -42,14 +100,27 @@ static void build_stf_freq(float *real, float *imag) {
 
     /* Non-zero subcarriers: {-24,-20,-16,-12,-8,-4,4,8,12,16,20,24} */
     /* subcarrier -> FFT bin: (sc % 64) */
-    struct { int sc; float r; float i; } stf_vals[] = {
-        {-24, +1, +1}, {-20, -1, -1}, {-16, +1, +1}, {-12, -1, -1},
-        { -8, -1, -1}, { -4, +1, +1}, {  4, -1, -1}, {  8, -1, -1},
-        { 12, +1, +1}, { 16, +1, +1}, { 20, +1, +1}, { 24, +1, +1},
+    struct {
+        int sc;
+        float r;
+        float i;
+    } stf_vals[] = {
+        {-24, +1, +1},
+        {-20, -1, -1},
+        {-16, +1, +1},
+        {-12, -1, -1},
+        {-8, -1, -1},
+        {-4, +1, +1},
+        {4, -1, -1},
+        {8, -1, -1},
+        {12, +1, +1},
+        {16, +1, +1},
+        {20, +1, +1},
+        {24, +1, +1},
     };
 
     for (int k = 0; k < 12; k++) {
-        int bin = ((stf_vals[k].sc % N) + N) % N;
+        int bin   = ((stf_vals[k].sc % N) + N) % N;
         real[bin] = scale * stf_vals[k].r;
         imag[bin] = scale * stf_vals[k].i;
     }
@@ -66,8 +137,8 @@ static void test_fft_roundtrip(lib80211_fft_plan *plan) {
     /* Create a test signal: complex sinusoid at bin 7 */
     for (int i = 0; i < N; i++) {
         double angle = 2.0 * M_PI * 7.0 * i / N;
-        in_real[i] = (float)cos(angle);
-        in_imag[i] = (float)sin(angle);
+        in_real[i]   = (float)cos(angle);
+        in_imag[i]   = (float)sin(angle);
     }
 
     lib80211_fft_forward(plan, in_real, in_imag, freq_real, freq_imag);
@@ -90,8 +161,8 @@ static void test_fft_single_bin(lib80211_fft_plan *plan) {
     /* Complex sinusoid at bin 7: x[n] = exp(j*2*pi*7*n/64) */
     for (int i = 0; i < N; i++) {
         double angle = 2.0 * M_PI * 7.0 * i / N;
-        in_real[i] = (float)cos(angle);
-        in_imag[i] = (float)sin(angle);
+        in_real[i]   = (float)cos(angle);
+        in_imag[i]   = (float)sin(angle);
     }
 
     lib80211_fft_forward(plan, in_real, in_imag, out_real, out_imag);
@@ -114,8 +185,10 @@ static void test_fft_single_bin(lib80211_fft_plan *plan) {
         }
     }
 
-    if (ok) TEST_PASS();
-    else TEST_FAIL("single-bin test failed");
+    if (ok)
+        TEST_PASS();
+    else
+        TEST_FAIL("single-bin test failed");
 }
 
 /* Test 3: IFFT of LTF freq — verify round-trip consistency.
@@ -124,7 +197,7 @@ static void test_fft_single_bin(lib80211_fft_plan *plan) {
 static void test_fft_ltf_consistency(lib80211_fft_plan *plan) {
     TEST_BEGIN("fft_ltf_consistency");
 
-    float imag_in[N] = {0};  /* LTF freq is real-valued */
+    float imag_in[N] = {0}; /* LTF freq is real-valued */
     float time_real[N], time_imag[N];
     float freq_real[N], freq_imag[N];
 
@@ -135,7 +208,8 @@ static void test_fft_ltf_consistency(lib80211_fft_plan *plan) {
     lib80211_fft_forward(plan, time_real, time_imag, freq_real, freq_imag);
 
     /* Should match original LTF frequency domain */
-    if (assert_complex_close(LTF_FREQ_REAL, imag_in, freq_real, freq_imag, N, 1e-4f, "LTF round-trip")) {
+    if (assert_complex_close(
+            LTF_FREQ_REAL, imag_in, freq_real, freq_imag, N, 1e-4f, "LTF round-trip")) {
         TEST_PASS();
     } else {
         TEST_FAIL("LTF round-trip mismatch");

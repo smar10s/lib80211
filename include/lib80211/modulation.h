@@ -17,8 +17,8 @@
  * @param n_symbols  Number of QAM symbols to produce
  * @param n_bpsc     Bits per subcarrier (1, 2, 4, 6, or 8)
  */
-void lib80211_modulate(const uint8_t *bits, float *out_real, float *out_imag,
-                       size_t n_symbols, int n_bpsc);
+void lib80211_modulate(
+    const uint8_t *bits, float *out_real, float *out_imag, size_t n_symbols, int n_bpsc);
 
 /**
  * Approximate max-log LLR soft demapper.
@@ -33,7 +33,7 @@ void lib80211_modulate(const uint8_t *bits, float *out_real, float *out_imag,
  * @param n_symbols  Number of received symbols
  * @param n_bpsc     Bits per subcarrier (1, 2, 4, 6, or 8)
  */
-void lib80211_soft_demap(const float *rx_real, const float *rx_imag,
-                         float *soft_bits, size_t n_symbols, int n_bpsc);
+void lib80211_soft_demap(
+    const float *rx_real, const float *rx_imag, float *soft_bits, size_t n_symbols, int n_bpsc);
 
 #endif /* LIB80211_MODULATION_H */

@@ -42,8 +42,10 @@ void lib80211_fft_plan_destroy(lib80211_fft_plan *plan);
  * Do not call concurrently from multiple threads with the same plan.
  */
 void lib80211_fft_forward(lib80211_fft_plan *plan,
-                          const float *in_real, const float *in_imag,
-                          float *out_real, float *out_imag);
+                          const float *in_real,
+                          const float *in_imag,
+                          float *out_real,
+                          float *out_imag);
 
 /**
  * Inverse FFT: frequency-domain -> time-domain (plan->n-point).
@@ -55,7 +57,9 @@ void lib80211_fft_forward(lib80211_fft_plan *plan,
  * Do not call concurrently from multiple threads with the same plan.
  */
 void lib80211_fft_inverse(lib80211_fft_plan *plan,
-                          const float *in_real, const float *in_imag,
-                          float *out_real, float *out_imag);
+                          const float *in_real,
+                          const float *in_imag,
+                          float *out_real,
+                          float *out_imag);
 
 #endif /* LIB80211_FFT_H */

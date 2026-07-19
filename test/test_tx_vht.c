@@ -20,15 +20,12 @@
 
 /* Annex I.1 PSDU (100 bytes, same as HT tests) */
 static const uint8_t TEST_PSDU[100] = {
-    0x04, 0x02, 0x00, 0x2E, 0x00, 0x60, 0x08, 0xCD, 0x37, 0xA6,
-    0x00, 0x20, 0xD6, 0x01, 0x3C, 0xF1, 0x00, 0x60, 0x08, 0xAD,
-    0x3B, 0xAF, 0x00, 0x00, 0x4A, 0x6F, 0x79, 0x2C, 0x20, 0x62,
-    0x72, 0x69, 0x67, 0x68, 0x74, 0x20, 0x73, 0x70, 0x61, 0x72,
-    0x6B, 0x20, 0x6F, 0x66, 0x20, 0x64, 0x69, 0x76, 0x69, 0x6E,
-    0x69, 0x74, 0x79, 0x2C, 0x0A, 0x44, 0x61, 0x75, 0x67, 0x68,
-    0x74, 0x65, 0x72, 0x20, 0x6F, 0x66, 0x20, 0x45, 0x6C, 0x79,
-    0x73, 0x69, 0x75, 0x6D, 0x2C, 0x0A, 0x46, 0x69, 0x72, 0x65,
-    0x2D, 0x69, 0x6E, 0x73, 0x69, 0x72, 0x65, 0x64, 0x20, 0x77,
+    0x04, 0x02, 0x00, 0x2E, 0x00, 0x60, 0x08, 0xCD, 0x37, 0xA6, 0x00, 0x20, 0xD6, 0x01, 0x3C,
+    0xF1, 0x00, 0x60, 0x08, 0xAD, 0x3B, 0xAF, 0x00, 0x00, 0x4A, 0x6F, 0x79, 0x2C, 0x20, 0x62,
+    0x72, 0x69, 0x67, 0x68, 0x74, 0x20, 0x73, 0x70, 0x61, 0x72, 0x6B, 0x20, 0x6F, 0x66, 0x20,
+    0x64, 0x69, 0x76, 0x69, 0x6E, 0x69, 0x74, 0x79, 0x2C, 0x0A, 0x44, 0x61, 0x75, 0x67, 0x68,
+    0x74, 0x65, 0x72, 0x20, 0x6F, 0x66, 0x20, 0x45, 0x6C, 0x79, 0x73, 0x69, 0x75, 0x6D, 0x2C,
+    0x0A, 0x46, 0x69, 0x72, 0x65, 0x2D, 0x69, 0x6E, 0x73, 0x69, 0x72, 0x65, 0x64, 0x20, 0x77,
     0x65, 0x20, 0x74, 0x72, 0x65, 0x61, 0x67, 0x33, 0x21, 0xB6,
 };
 
@@ -46,7 +43,8 @@ static void test_vhtsiga_bits(int mcs, bool sgi) {
     test_vector *vec = vector_load(vec_name);
     if (!vec || !vec->bits || vec->n_bits != 48) {
         TEST_FAIL("cannot load %s (n_bits=%zu)", vec_name, vec ? vec->n_bits : 0);
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -76,7 +74,8 @@ static void test_vhtsigb_bits(int mcs, bool sgi) {
     test_vector *vec = vector_load(vec_name);
     if (!vec || !vec->bits || vec->n_bits != 26) {
         TEST_FAIL("cannot load %s (n_bits=%zu)", vec_name, vec ? vec->n_bits : 0);
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
@@ -106,22 +105,24 @@ static void test_tx_vht_waveform(lib80211_fft_plan *plan, int mcs, bool sgi) {
     test_vector *vec = vector_load(vec_name);
     if (!vec || !vec->real || !vec->imag || vec->n_complex == 0) {
         TEST_FAIL("cannot load %s", vec_name);
-        if (vec) vector_free(vec);
+        if (vec)
+            vector_free(vec);
         return;
     }
 
     lib80211_tx_vht_params params = {
-        .mcs = mcs,
-        .psdu = TEST_PSDU,
-        .psdu_len = 100,
+        .mcs            = mcs,
+        .psdu           = TEST_PSDU,
+        .psdu_len       = 100,
         .scrambler_seed = 0x5D,
-        .short_gi = sgi,
+        .short_gi       = sgi,
     };
 
     size_t expected_samples = lib80211_tx_vht_samples(&params);
     if (expected_samples != vec->n_complex) {
         TEST_FAIL("sample count mismatch: computed %zu, vector has %zu",
-                  expected_samples, vec->n_complex);
+                  expected_samples,
+                  vec->n_complex);
         vector_free(vec);
         return;
     }
@@ -130,7 +131,8 @@ static void test_tx_vht_waveform(lib80211_fft_plan *plan, int mcs, bool sgi) {
     float *out_imag = malloc(expected_samples * sizeof(float));
     if (!out_real || !out_imag) {
         TEST_FAIL("malloc failed");
-        free(out_real); free(out_imag);
+        free(out_real);
+        free(out_imag);
         vector_free(vec);
         return;
     }
@@ -139,8 +141,8 @@ static void test_tx_vht_waveform(lib80211_fft_plan *plan, int mcs, bool sgi) {
     if (n_out != expected_samples) {
         TEST_FAIL("output count: expected %zu, got %zu", expected_samples, n_out);
     } else {
-        if (!assert_complex_close(vec->real, vec->imag, out_real, out_imag,
-                                  n_out, 1e-5f, vec_name)) {
+        if (!assert_complex_close(
+                vec->real, vec->imag, out_real, out_imag, n_out, 1e-5f, vec_name)) {
             TEST_FAIL("waveform mismatch");
         } else {
             TEST_PASS();

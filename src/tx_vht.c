@@ -39,19 +39,19 @@
 #include <math.h>
 
 /* TX normalization factors */
-#define VHT_NORM_LEGACY  (64.0f / sqrtf(52.0f))   /* ~8.875 */
-#define VHT_NORM_VHT     (64.0f / sqrtf(56.0f))   /* ~8.552 */
+#define VHT_NORM_LEGACY (64.0f / sqrtf(52.0f)) /* ~8.875 */
+#define VHT_NORM_VHT (64.0f / sqrtf(56.0f))    /* ~8.552 */
 
 /*
  * Maximum PSDU size for buffer allocation.
  * This matches the legacy maximum (L-SIG LENGTH field is 12 bits = 4095).
  * Worst case at MCS 0 (n_dbps=26): ceil((16+32760+6)/26)=1261 symbols.
  */
-#define VHT_MAX_PSDU      4095
-#define VHT_MAX_DATA_BITS (16 + VHT_MAX_PSDU * 8 + 6 + 416)  /* SERVICE+PSDU+TAIL+maxPAD */
-#define VHT_MAX_CODED     (VHT_MAX_DATA_BITS * 2)
+#define VHT_MAX_PSDU 4095
+#define VHT_MAX_DATA_BITS (16 + VHT_MAX_PSDU * 8 + 6 + 416) /* SERVICE+PSDU+TAIL+maxPAD */
+#define VHT_MAX_CODED (VHT_MAX_DATA_BITS * 2)
 /* Max windowing boundaries: 8 preamble + ceil((16+32760+6)/26) DATA = 1269 */
-#define VHT_MAX_BOUNDS    1280
+#define VHT_MAX_BOUNDS 1280
 
 /**
  * Compute VHT n_sym: ceil((16 + 8*psdu_len + 6) / n_dbps)
@@ -64,15 +64,17 @@ static int vht_n_sym(int psdu_len, int n_dbps) {
 }
 
 size_t lib80211_tx_vht_samples(const lib80211_tx_vht_params *params) {
-    if (params->mcs < 0 || params->mcs > 8) return 0;
-    if (params->psdu_len > VHT_MAX_PSDU) return 0;
+    if (params->mcs < 0 || params->mcs > 8)
+        return 0;
+    if (params->psdu_len > VHT_MAX_PSDU)
+        return 0;
 
     const lib80211_ht_mcs_info *mcs = &LIB80211_VHT_MCS_TABLE[params->mcs];
-    int n_sym = vht_n_sym((int)params->psdu_len, mcs->n_dbps);
+    int n_sym                       = vht_n_sym((int)params->psdu_len, mcs->n_dbps);
 
     /* Preamble: L-STF(160) + L-LTF(160) + L-SIG(80) + VHT-SIG-A(160)
      *         + VHT-STF(80) + VHT-LTF(80) + VHT-SIG-B(80) = 800 */
-    size_t preamble = 800;
+    size_t preamble                 = 800;
 
     if (params->short_gi) {
         /* SGI: n_sym * 72 + 1 (last symbol has extra sample for disambiguity) */
@@ -85,64 +87,77 @@ size_t lib80211_tx_vht_samples(const lib80211_tx_vht_params *params) {
 size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
                          const lib80211_tx_vht_params *params,
                          lib80211_scratch *scratch,
-                         float *out_real, float *out_imag) {
-    if (params->mcs < 0 || params->mcs > 8) return 0;
-    if (params->psdu_len > VHT_MAX_PSDU) return 0;
+                         float *out_real,
+                         float *out_imag) {
+    if (params->mcs < 0 || params->mcs > 8)
+        return 0;
+    if (params->psdu_len > VHT_MAX_PSDU)
+        return 0;
 
     lib80211_scratch_reset(scratch);
 
     const lib80211_ht_mcs_info *mcs = &LIB80211_VHT_MCS_TABLE[params->mcs];
-    int n_bpsc = mcs->n_bpsc;
-    int n_cbps = mcs->n_cbps;
-    int n_dbps = mcs->n_dbps;
-    int cr_n = mcs->cr_n;
-    int cr_d = mcs->cr_d;
+    int n_bpsc                      = mcs->n_bpsc;
+    int n_cbps                      = mcs->n_cbps;
+    int n_dbps                      = mcs->n_dbps;
+    int cr_n                        = mcs->cr_n;
+    int cr_d                        = mcs->cr_d;
 
     /* Compute frame dimensions */
-    int n_sym = vht_n_sym((int)params->psdu_len, n_dbps);
-    int n_data_bits_total = n_sym * n_dbps;  /* total data bits across all symbols */
+    int n_sym                       = vht_n_sym((int)params->psdu_len, n_dbps);
+    int n_data_bits_total           = n_sym * n_dbps; /* total data bits across all symbols */
 
     /* Pre-compute LDPC extra symbol flag (needed for VHT-SIG-A) */
-    int ldpc_extra = 0;
+    int ldpc_extra                  = 0;
     if (params->ldpc) {
         /* Dry-run: compute ldpc_extra without actually encoding */
-        int n_payload = 16 + 8 * (int)params->psdu_len;
+        int n_payload  = 16 + 8 * (int)params->psdu_len;
         int n_sym_init = (n_payload + n_dbps - 1) / n_dbps;
-        int n_pld = n_sym_init * n_dbps;
+        int n_pld      = n_sym_init * n_dbps;
 
         /* Select codeword params */
         int l_cw = 1944, n_cw = 1;
         int k_cap;
-        if (n_pld <= 648 * cr_n / cr_d) { l_cw = 648; }
-        else if (n_pld <= 1296 * cr_n / cr_d) { l_cw = 1296; }
-        else if (n_pld <= 1944 * cr_n / cr_d) { l_cw = 1944; }
-        else { l_cw = 1944; n_cw = (n_pld * cr_d + 1944 * cr_n - 1) / (1944 * cr_n); }
-        k_cap = l_cw * cr_n / cr_d;
+        if (n_pld <= 648 * cr_n / cr_d) {
+            l_cw = 648;
+        } else if (n_pld <= 1296 * cr_n / cr_d) {
+            l_cw = 1296;
+        } else if (n_pld <= 1944 * cr_n / cr_d) {
+            l_cw = 1944;
+        } else {
+            l_cw = 1944;
+            n_cw = (n_pld * cr_d + 1944 * cr_n - 1) / (1944 * cr_n);
+        }
+        k_cap             = l_cw * cr_n / cr_d;
 
         int n_avail_check = n_sym_init * n_cbps;
-        int n_shrt_check = n_cw * k_cap - n_pld;
-        if (n_shrt_check < 0) n_shrt_check = 0;
+        int n_shrt_check  = n_cw * k_cap - n_pld;
+        if (n_shrt_check < 0)
+            n_shrt_check = 0;
         int n_punc_check = n_cw * l_cw - n_avail_check - n_shrt_check;
-        if (n_punc_check < 0) n_punc_check = 0;
+        if (n_punc_check < 0)
+            n_punc_check = 0;
         int n_parity_check = n_cw * (l_cw - k_cap);
         if (n_parity_check > 0 && n_punc_check * 10 > n_parity_check) {
             ldpc_extra = 1;
         }
     }
 
-    int cp_len = params->short_gi ? LIB80211_NCP_SHORT : LIB80211_NCP;
-    int sym_len = cp_len + LIB80211_NFFT;
+    int cp_len     = params->short_gi ? LIB80211_NCP_SHORT : LIB80211_NCP;
+    int sym_len    = cp_len + LIB80211_NFFT;
 
     size_t out_idx = 0;
 
     /* === L-STF (160 samples) === */
     lib80211_generate_stf(plan, &out_real[out_idx], &out_imag[out_idx]);
-    lib80211_scale_iq(&out_real[out_idx], &out_imag[out_idx], LIB80211_STF_SAMPLES, VHT_NORM_LEGACY);
+    lib80211_scale_iq(
+        &out_real[out_idx], &out_imag[out_idx], LIB80211_STF_SAMPLES, VHT_NORM_LEGACY);
     out_idx += LIB80211_STF_SAMPLES;
 
     /* === L-LTF (160 samples) === */
     lib80211_generate_ltf(plan, &out_real[out_idx], &out_imag[out_idx]);
-    lib80211_scale_iq(&out_real[out_idx], &out_imag[out_idx], LIB80211_LTF_SAMPLES, VHT_NORM_LEGACY);
+    lib80211_scale_iq(
+        &out_real[out_idx], &out_imag[out_idx], LIB80211_LTF_SAMPLES, VHT_NORM_LEGACY);
     out_idx += LIB80211_LTF_SAMPLES;
 
     /* === L-SIG (80 samples) === */
@@ -154,15 +169,19 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
         /* Normal GI: (5 + n_sym) * 3 - 3 */
         lsig_length = (5 + n_sym) * 3 - 3;
     }
-    lib80211_make_lsig_symbol(plan, 6, lsig_length,
-                              &out_real[out_idx], &out_imag[out_idx]);
+    lib80211_make_lsig_symbol(plan, 6, lsig_length, &out_real[out_idx], &out_imag[out_idx]);
     lib80211_scale_iq(&out_real[out_idx], &out_imag[out_idx], LIB80211_SYMBOL_LEN, VHT_NORM_LEGACY);
     out_idx += LIB80211_SYMBOL_LEN;
 
     /* === VHT-SIG-A (160 samples, 2 OFDM symbols) === */
-    lib80211_make_vhtsiga_symbols(plan, params->mcs, (int)params->psdu_len,
-                                  params->short_gi, params->ldpc, ldpc_extra,
-                                  &out_real[out_idx], &out_imag[out_idx]);
+    lib80211_make_vhtsiga_symbols(plan,
+                                  params->mcs,
+                                  (int)params->psdu_len,
+                                  params->short_gi,
+                                  params->ldpc,
+                                  ldpc_extra,
+                                  &out_real[out_idx],
+                                  &out_imag[out_idx]);
     lib80211_scale_iq(&out_real[out_idx], &out_imag[out_idx], 160, VHT_NORM_LEGACY);
     out_idx += 160;
 
@@ -177,8 +196,8 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
     out_idx += 80;
 
     /* === VHT-SIG-B (80 samples) === */
-    lib80211_make_vhtsigb_symbol(plan, (int)params->psdu_len,
-                                 &out_real[out_idx], &out_imag[out_idx]);
+    lib80211_make_vhtsigb_symbol(
+        plan, (int)params->psdu_len, &out_real[out_idx], &out_imag[out_idx]);
     lib80211_scale_iq(&out_real[out_idx], &out_imag[out_idx], 80, VHT_NORM_VHT);
     out_idx += 80;
 
@@ -189,15 +208,16 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
      * VHT SERVICE bits 8-15: CRC-8 of VHT-SIG-B first 20 bits. */
     uint8_t sigb_bits[26];
     lib80211_make_vhtsigb_bits((int)params->psdu_len, sigb_bits);
-    uint8_t sigb_crc = lib80211_htsig_crc8(sigb_bits, 20);
+    uint8_t sigb_crc     = lib80211_htsig_crc8(sigb_bits, 20);
     uint8_t sigb_crc_inv = (uint8_t)(~sigb_crc & 0xFF);
 
     /* Allocate working buffers from scratch. */
-    size_t alloc_data = (size_t)VHT_MAX_DATA_BITS;
-    size_t alloc_coded = (size_t)VHT_MAX_CODED;
-    uint8_t *data_bits = (uint8_t *)lib80211_scratch_alloc(scratch, alloc_data, 0);
-    uint8_t *coded     = (uint8_t *)lib80211_scratch_alloc(scratch, alloc_coded, 0);
-    if (!data_bits || !coded) return 0;
+    size_t alloc_data    = (size_t)VHT_MAX_DATA_BITS;
+    size_t alloc_coded   = (size_t)VHT_MAX_CODED;
+    uint8_t *data_bits   = (uint8_t *)lib80211_scratch_alloc(scratch, alloc_data, 0);
+    uint8_t *coded       = (uint8_t *)lib80211_scratch_alloc(scratch, alloc_coded, 0);
+    if (!data_bits || !coded)
+        return 0;
 
     if (params->ldpc) {
         /* --- LDPC path: no tail bits, no interleaving --- */
@@ -219,21 +239,27 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
         }
 
         /* Pad to initial n_sym * n_dbps for scrambling */
-        int n_sym_init = (n_payload + n_dbps - 1) / n_dbps;
+        int n_sym_init   = (n_payload + n_dbps - 1) / n_dbps;
         int scramble_len = n_sym_init * n_dbps;
         memset(&data_bits[n_payload], 0, (size_t)(scramble_len - n_payload));
 
         /* Scramble (use a separate buffer from scratch) */
         uint8_t *scrambled_buf = (uint8_t *)lib80211_scratch_alloc(scratch, alloc_data, 0);
-        if (!scrambled_buf) return 0;
-        lib80211_scramble(data_bits, scrambled_buf, (size_t)scramble_len,
-                          params->scrambler_seed);
+        if (!scrambled_buf)
+            return 0;
+        lib80211_scramble(data_bits, scrambled_buf, (size_t)scramble_len, params->scrambler_seed);
 
         /* LDPC encode */
         int n_sym_ldpc = 0, ldpc_extra_actual = 0;
-        lib80211_ldpc_encode_data(scrambled_buf, n_payload,
-                                  n_dbps, n_cbps, cr_n, cr_d,
-                                  coded, &n_sym_ldpc, &ldpc_extra_actual);
+        lib80211_ldpc_encode_data(scrambled_buf,
+                                  n_payload,
+                                  n_dbps,
+                                  n_cbps,
+                                  cr_n,
+                                  cr_d,
+                                  coded,
+                                  &n_sym_ldpc,
+                                  &ldpc_extra_actual);
 
         /* Update n_sym for windowing */
         n_sym = n_sym_ldpc;
@@ -251,17 +277,16 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
             float freq_imag[64] = {0};
 
             for (int i = 0; i < 52; i++) {
-                int bin = LIB80211_HT_DATA_BINS[i];
+                int bin        = LIB80211_HT_DATA_BINS[i];
                 freq_real[bin] = mod_real[i];
                 freq_imag[bin] = mod_imag[i];
             }
 
             /* VHT pilots: z_start=4 */
-            float polarity = (float)LIB80211_PILOT_POLARITY[
-                (LIB80211_VHT_PILOT_Z_START + s) % 127];
+            float polarity = (float)LIB80211_PILOT_POLARITY[(LIB80211_VHT_PILOT_Z_START + s) % 127];
             for (int k = 0; k < 4; k++) {
-                int bin = LIB80211_HT_PILOT_BINS[k];
-                float pattern = LIB80211_HT_PILOT_PATTERN[(s + k) % 4];
+                int bin        = LIB80211_HT_PILOT_BINS[k];
+                float pattern  = LIB80211_HT_PILOT_PATTERN[(s + k) % 4];
                 freq_real[bin] = polarity * pattern;
                 freq_imag[bin] = 0.0f;
             }
@@ -271,16 +296,18 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
             lib80211_fft_inverse(plan, freq_real, freq_imag, time_real, time_imag);
 
             /* Prepend cyclic prefix */
-            int this_cp_len = cp_len;
+            int this_cp_len  = cp_len;
             int this_sym_len = sym_len;
 
             if (params->short_gi && s == n_sym - 1) {
                 this_sym_len = sym_len + 1;
             }
 
-            memcpy(&out_real[out_idx], &time_real[64 - this_cp_len],
+            memcpy(&out_real[out_idx],
+                   &time_real[64 - this_cp_len],
                    (size_t)this_cp_len * sizeof(float));
-            memcpy(&out_imag[out_idx], &time_imag[64 - this_cp_len],
+            memcpy(&out_imag[out_idx],
+                   &time_imag[64 - this_cp_len],
                    (size_t)this_cp_len * sizeof(float));
             memcpy(&out_real[out_idx + this_cp_len], time_real, 64 * sizeof(float));
             memcpy(&out_imag[out_idx + this_cp_len], time_imag, 64 * sizeof(float));
@@ -290,18 +317,19 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
                 out_imag[out_idx + this_cp_len + 64] = time_imag[0];
             }
 
-            lib80211_scale_iq(&out_real[out_idx], &out_imag[out_idx],
-                     (size_t)this_sym_len, VHT_NORM_VHT);
+            lib80211_scale_iq(
+                &out_real[out_idx], &out_imag[out_idx], (size_t)this_sym_len, VHT_NORM_VHT);
             out_idx += (size_t)this_sym_len;
         }
     } else {
         /* --- BCC path (original behavior) --- */
         uint8_t *punctured = (uint8_t *)lib80211_scratch_alloc(scratch, alloc_coded, 0);
-        if (!punctured) return 0;
+        if (!punctured)
+            return 0;
 
         /* Scrambler input: SERVICE(16) + PSDU(8*len) + PAD(n_pad) */
-        int n_data_bits = 16 + 8 * (int)params->psdu_len;
-        int n_pad = n_data_bits_total - n_data_bits - 6;
+        int n_data_bits         = 16 + 8 * (int)params->psdu_len;
+        int n_pad               = n_data_bits_total - n_data_bits - 6;
         int scrambler_input_len = n_data_bits + n_pad;
 
         /* Build scrambler input in data_bits[] */
@@ -320,8 +348,7 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
         }
 
         /* Scramble (use coded[] as temp) */
-        lib80211_scramble(data_bits, coded, (size_t)scrambler_input_len,
-                          params->scrambler_seed);
+        lib80211_scramble(data_bits, coded, (size_t)scrambler_input_len, params->scrambler_seed);
 
         /* Build data_with_tail: scrambled + 6 zero tail bits */
         memcpy(data_bits, coded, (size_t)scrambler_input_len);
@@ -364,17 +391,16 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
             float freq_imag[64] = {0};
 
             for (int i = 0; i < 52; i++) {
-                int bin = LIB80211_HT_DATA_BINS[i];
+                int bin        = LIB80211_HT_DATA_BINS[i];
                 freq_real[bin] = mod_real[i];
                 freq_imag[bin] = mod_imag[i];
             }
 
             /* VHT pilots: z_start=4 */
-            float polarity = (float)LIB80211_PILOT_POLARITY[
-                (LIB80211_VHT_PILOT_Z_START + s) % 127];
+            float polarity = (float)LIB80211_PILOT_POLARITY[(LIB80211_VHT_PILOT_Z_START + s) % 127];
             for (int k = 0; k < 4; k++) {
-                int bin = LIB80211_HT_PILOT_BINS[k];
-                float pattern = LIB80211_HT_PILOT_PATTERN[(s + k) % 4];
+                int bin        = LIB80211_HT_PILOT_BINS[k];
+                float pattern  = LIB80211_HT_PILOT_PATTERN[(s + k) % 4];
                 freq_real[bin] = polarity * pattern;
                 freq_imag[bin] = 0.0f;
             }
@@ -384,16 +410,18 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
             lib80211_fft_inverse(plan, freq_real, freq_imag, time_real, time_imag);
 
             /* Prepend cyclic prefix */
-            int this_cp_len = cp_len;
+            int this_cp_len  = cp_len;
             int this_sym_len = sym_len;
 
             if (params->short_gi && s == n_sym - 1) {
                 this_sym_len = sym_len + 1;
             }
 
-            memcpy(&out_real[out_idx], &time_real[64 - this_cp_len],
+            memcpy(&out_real[out_idx],
+                   &time_real[64 - this_cp_len],
                    (size_t)this_cp_len * sizeof(float));
-            memcpy(&out_imag[out_idx], &time_imag[64 - this_cp_len],
+            memcpy(&out_imag[out_idx],
+                   &time_imag[64 - this_cp_len],
                    (size_t)this_cp_len * sizeof(float));
             memcpy(&out_real[out_idx + this_cp_len], time_real, 64 * sizeof(float));
             memcpy(&out_imag[out_idx + this_cp_len], time_imag, 64 * sizeof(float));
@@ -403,8 +431,8 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
                 out_imag[out_idx + this_cp_len + 64] = time_imag[0];
             }
 
-            lib80211_scale_iq(&out_real[out_idx], &out_imag[out_idx],
-                     (size_t)this_sym_len, VHT_NORM_VHT);
+            lib80211_scale_iq(
+                &out_real[out_idx], &out_imag[out_idx], (size_t)this_sym_len, VHT_NORM_VHT);
             out_idx += (size_t)this_sym_len;
         }
     }
@@ -424,11 +452,11 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
         /* Normal GI: compute boundary values, circshift, then place boundaries */
 
         static const int preamble_boundary_pos[] = {159, 319, 399, 479, 559, 639, 719, 799};
-        static const int preamble_body_first[] = {0, 192, 336, 416, 496, 576, 656, 736};
-        const int n_preamble_bounds = 8;
+        static const int preamble_body_first[]   = {0, 192, 336, 416, 496, 576, 656, 736};
+        const int n_preamble_bounds              = 8;
 
-        int n_data_bounds = n_sym;
-        int n_total_bounds = n_preamble_bounds + n_data_bounds;
+        int n_data_bounds                        = n_sym;
+        int n_total_bounds                       = n_preamble_bounds + n_data_bounds;
 
         float bound_real[VHT_MAX_BOUNDS];
         float bound_imag[VHT_MAX_BOUNDS];
@@ -436,20 +464,20 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
 
         /* Preamble boundaries */
         for (int i = 0; i < n_preamble_bounds; i++) {
-            int bpos = preamble_boundary_pos[i];
-            int bf = preamble_body_first[i];
+            int bpos      = preamble_boundary_pos[i];
+            int bf        = preamble_body_first[i];
             bound_real[i] = 0.5f * (out_real[bf] + out_real[bpos + 1]);
             bound_imag[i] = 0.5f * (out_imag[bf] + out_imag[bpos + 1]);
-            bound_pos[i] = bpos;
+            bound_pos[i]  = bpos;
         }
 
         /* DATA symbol boundaries */
         {
             size_t pos = 800;
             for (int s = 0; s < n_sym; s++) {
-                size_t bpos = pos + (size_t)sym_len - 1;
-                size_t bf = pos + (size_t)cp_len;
-                int bi = n_preamble_bounds + s;
+                size_t bpos   = pos + (size_t)sym_len - 1;
+                size_t bf     = pos + (size_t)cp_len;
+                int bi        = n_preamble_bounds + s;
                 bound_pos[bi] = (int)bpos;
 
                 if (s < n_sym - 1) {
@@ -488,11 +516,11 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
 
         /* Windowing at field boundaries: replace first sample of next field */
         static const int sgi_boundary_pos[] = {160, 320, 400, 480, 560, 640, 720, 800};
-        static const int sgi_body_first[] = {0, 192, 336, 416, 496, 576, 656, 736};
+        static const int sgi_body_first[]   = {0, 192, 336, 416, 496, 576, 656, 736};
 
         for (int i = 0; i < 8; i++) {
-            int bpos = sgi_boundary_pos[i];
-            int bf = sgi_body_first[i];
+            int bpos      = sgi_boundary_pos[i];
+            int bf        = sgi_body_first[i];
             /* Use the unhalved body first (bf=0 is already halved, need original) */
             float bf_real = out_real[bf];
             float bf_imag = out_imag[bf];
@@ -509,8 +537,8 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
         {
             size_t pos = 800;
             for (int s = 0; s < n_sym - 1; s++) {
-                size_t bf = pos + (size_t)cp_len;
-                size_t next_pos = pos + (size_t)sym_len;
+                size_t bf          = pos + (size_t)cp_len;
+                size_t next_pos    = pos + (size_t)sym_len;
                 out_real[next_pos] = 0.5f * (out_real[bf] + out_real[next_pos]);
                 out_imag[next_pos] = 0.5f * (out_imag[bf] + out_imag[next_pos]);
                 pos += (size_t)sym_len;
@@ -520,7 +548,7 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
         /* Last sample = 0.5 * body_first of last DATA symbol */
         {
             size_t last_sym_start = 800 + (size_t)(n_sym - 1) * (size_t)sym_len;
-            size_t last_bf = last_sym_start + (size_t)cp_len;
+            size_t last_bf        = last_sym_start + (size_t)cp_len;
             out_real[out_idx - 1] = 0.5f * out_real[last_bf];
             out_imag[out_idx - 1] = 0.5f * out_imag[last_bf];
         }
@@ -531,11 +559,12 @@ size_t lib80211_tx_vht_s(lib80211_fft_plan *plan,
 
 size_t lib80211_tx_vht(lib80211_fft_plan *plan,
                        const lib80211_tx_vht_params *params,
-                       float *out_real, float *out_imag)
-{
+                       float *out_real,
+                       float *out_imag) {
     size_t scratch_size = LIB80211_SCRATCH_TX_SIZE;
-    uint8_t *mem = (uint8_t *)malloc(scratch_size);
-    if (!mem) return 0;
+    uint8_t *mem        = (uint8_t *)malloc(scratch_size);
+    if (!mem)
+        return 0;
 
     lib80211_scratch scratch;
     lib80211_scratch_init(&scratch, mem, scratch_size);

@@ -9,10 +9,10 @@
  * Initialize slope=0, alpha=0.3, initialized=0 before first call.
  */
 typedef struct {
-    float slope;        /* EWMA-smoothed phase slope (radians/subcarrier) */
-    float alpha;        /* EWMA smoothing factor (0.3 typical) */
-    int initialized;    /* 0 = first symbol, slope not yet initialized */
-    int update_h;       /* If non-zero, apply conjugate correction to H each symbol */
+    float slope;     /* EWMA-smoothed phase slope (radians/subcarrier) */
+    float alpha;     /* EWMA smoothing factor (0.3 typical) */
+    int initialized; /* 0 = first symbol, slope not yet initialized */
+    int update_h;    /* If non-zero, apply conjugate correction to H each symbol */
 } lib80211_pilot_state;
 
 /**
@@ -31,8 +31,10 @@ typedef struct {
  * @param noise_var  Output: estimated noise variance (nullable)
  */
 void lib80211_estimate_channel(lib80211_fft_plan *plan,
-                               const float *ltf_real, const float *ltf_imag,
-                               float *H_real, float *H_imag,
+                               const float *ltf_real,
+                               const float *ltf_imag,
+                               float *H_real,
+                               float *H_imag,
                                float *noise_var);
 
 /**
@@ -46,10 +48,13 @@ void lib80211_estimate_channel(lib80211_fft_plan *plan,
  * @param out_real    Equalized output (real), 64 values
  * @param out_imag    Equalized output (imag), 64 values
  */
-void lib80211_equalize(const float *Y_real, const float *Y_imag,
-                       const float *H_real, const float *H_imag,
+void lib80211_equalize(const float *Y_real,
+                       const float *Y_imag,
+                       const float *H_real,
+                       const float *H_imag,
                        float noise_var,
-                       float *out_real, float *out_imag);
+                       float *out_real,
+                       float *out_imag);
 
 /**
  * Extract one legacy OFDM DATA symbol: FFT, equalize, pilot track, extract data.
@@ -74,10 +79,14 @@ void lib80211_equalize(const float *Y_real, const float *Y_imag,
  * @param out_imag      Output: 48 equalized data subcarrier values (Q)
  */
 void lib80211_extract_legacy_symbol(lib80211_fft_plan *plan,
-                                    const float *sym_real, const float *sym_imag,
-                                    float *H_real, float *H_imag,
-                                    float noise_var, int symbol_idx,
+                                    const float *sym_real,
+                                    const float *sym_imag,
+                                    float *H_real,
+                                    float *H_imag,
+                                    float noise_var,
+                                    int symbol_idx,
                                     lib80211_pilot_state *pilot_state,
-                                    float *out_real, float *out_imag);
+                                    float *out_real,
+                                    float *out_imag);
 
 #endif /* LIB80211_CHANNEL_H */
